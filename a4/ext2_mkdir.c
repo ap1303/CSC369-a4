@@ -62,43 +62,26 @@ int main(int argc, char **argv) {
       return ENOENT;
     }
 
-    // modify parent block to make room for the new one
-    struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent.i_block[0]);
-    int rec_len_sum = 0;
-    while (rec_len_sum < EXT2_BLOCK_SIZE) {
-        dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent.i_block[0] + rec_len_sum);
-        unsigned short rec_len = dir -> rec_len;
-        if (rec_len_sum + rec_len == EXT2_BLOCK_SIZE) {
-            int raw_length = 4 + 2 + 1 + 1 + dir -> name_len;
-            int padded_length = raw_length + (4 - raw_length % 4);
-            dir -> rec_len = padded_length;
-            break;
-        }
-        rec_len_sum += rec_len;
-    }
+    // modify parent block to insert a new entry
+    reconfigure_dir(disk, *parent, name);
 
-    dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent.i_block[0] + rec_len_sum);
-    dir -> inode = inode;
-    dir -> rec_len = EXT2_BLOCK_SIZE - rec_len_sum;
-    dir -> name_len = strlen(name);
-    dir -> file_type = EXT2_FT_DIR;
-    strncpy(dir -> name, name, dir -> name_len);
+    // initialize inode for new entry
+    inode_table[inode_num].i_mode = EXT2_S_IFDIR;
+    inode_table[inode_num].i_size = 1024;
+    inode_table[inode_num].i_blocks = 2;
+    inode_table[inode_num].i_block[0] = block;
+    inode_table[inode_num].i_links_count = 1;
 
-    inode_table[inode].i_mode = EXT2_S_IFDIR;
-    inode_table[inode].i_size = 1024;
-    inode_table[inode].i_blocks = 2;
-    inode_table[inode].i_block[0] = block;
-    inode_table[inode].i_links_count = 1;
-
-    struct ext2_dir_entry *self = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * block);
-    self -> inode = inode;
+    // create '.' for new inode
+    struct ext2_dir_entry *self = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * block_num);
+    self -> inode = inode_num;
     self -> rec_len = 12;
     self -> name_len = 1;
     self -> file_type = EXT2_FT_DIR;
     self -> name[0] = '.';
 
     struct ext2_dir_entry *parent_pointer = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * block + 12);
-    parent_pointer -> inode = inode;
+    parent_pointer -> inode = inode_num;
     parent_pointer -> rec_len = 12;
     parent_pointer -> name_len = 2;
     parent_pointer -> file_type = EXT2_FT_DIR;

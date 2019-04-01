@@ -100,3 +100,27 @@ int get_last_name(struct ext2_inode *inode_table, struct ext2_inode *root, char 
       }
       return 0;
 }
+
+int reconfigure_dir(unsigned char *disk, struct ext2_inode parent, char *name) {
+  // modify parent block to make room for the new one
+  struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent.i_block[0]);
+  int rec_len_sum = 0;
+  while (rec_len_sum < EXT2_BLOCK_SIZE) {
+      dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent.i_block[0] + rec_len_sum);
+      unsigned short rec_len = dir -> rec_len;
+      if (rec_len_sum + rec_len == EXT2_BLOCK_SIZE) {
+          int raw_length = 4 + 2 + 1 + 1 + dir -> name_len;
+          int padded_length = raw_length + (4 - raw_length % 4);
+          dir -> rec_len = padded_length;
+          break;
+      }
+      rec_len_sum += rec_len;
+  }
+
+  dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent.i_block[0] + rec_len_sum);
+  dir -> inode = inode;
+  dir -> rec_len = EXT2_BLOCK_SIZE - rec_len_sum;
+  dir -> name_len = strlen(name);
+  dir -> file_type = EXT2_FT_DIR;
+  strncpy(dir -> name, name, dir -> name_len);
+}
