@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include "ext2.h"
+#include "ext2_helper.c"
 
 unsigned char *disk;
 
@@ -83,12 +84,11 @@ int main(int argc, char **argv) {
     dir -> file_type = EXT2_FT_DIR;
     strncpy(dir -> name, name, dir -> name_len);
 
-    struct ext2_inode new = inode_table[inode];
-    new.i_mode = EXT2_S_IFDIR;
-    new.i_size = 1024;
-    new.i_blocks = 2;
-    new.i_block[0] = block;
-    new.i_links_count = 0;
+    inode_table[inode].i_mode = EXT2_S_IFDIR;
+    inode_table[inode].i_size = 1024;
+    inode_table[inode].i_blocks = 2;
+    inode_table[inode].i_block[0] = block;
+    inode_table[inode].i_links_count = 1;
 
     struct ext2_dir_entry *self = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * block);
     self -> inode = inode;

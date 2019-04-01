@@ -1,4 +1,14 @@
 #include "ext2.h"
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/mman.h>
+
 
 int allocate_block(unsigned char *disk, struct ext2_group_desc *bg, unsigned int blocks_count) {
     unsigned char *block_bitmap = disk + bg->bg_block_bitmap * EXT2_BLOCK_SIZE;
