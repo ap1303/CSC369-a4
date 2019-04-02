@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
     char name[1024];
     int discontinuities = get_last_name(inode_table, root, path, parent, name);
     if (discontinuities == 0) {
-        if (search_dir(name, parent) != -1) {
+        if (search_dir(disk, name, parent) != -1) {
             return EEXIST;
         }
     } else {
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
     }
 
     // modify parent block to insert a new entry
-    reconfigure_dir(disk, *parent, name);
+    reconfigure_dir(disk, *parent, name, inode_num);
 
     // initialize inode for new entry
     inode_table[inode_num].i_mode = EXT2_S_IFDIR;

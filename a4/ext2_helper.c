@@ -66,7 +66,7 @@ int search_dir(unsigned char *disk, char *substring, struct ext2_inode *current)
 }
 
 // Get the name of last entry in path, and the parent inode
-int get_last_name(struct ext2_inode *inode_table, struct ext2_inode *root, char *path, struct ext2_inode *parent_inode, char *name) {
+int get_last_name(unsigned char *disk, struct ext2_inode *inode_table, struct ext2_inode *root, char *path, struct ext2_inode *parent_inode, char *name) {
      char *start = path + 1;
      char *end = strchr(start, '/');
      char *substring = malloc(sizeof(char) * 1024);
@@ -80,7 +80,7 @@ int get_last_name(struct ext2_inode *inode_table, struct ext2_inode *root, char 
      }
      struct ext2_inode *current = root;
      while (end != NULL) {
-         int inode = search_dir(substring, current);
+         int inode = search_dir(disk, substring, current);
          if (inode == -1) {
              return ENOENT;
          }
