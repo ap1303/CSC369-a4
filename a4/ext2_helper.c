@@ -88,7 +88,7 @@ int get_last_name(unsigned char *disk, struct ext2_inode *inode_table, struct ex
          start = end;
          end = strchr(start + 1, '/');
          if (end == NULL) {
-             name = start;
+             name = start + 1;
              name[strlen(start)] = '\0';
              parent_inode[0] = *current;
              break;
