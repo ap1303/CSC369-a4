@@ -65,8 +65,8 @@ int main(argc, char **argv) {
     }
 
     if (dest_inode && (dest_inode->i_mode & EXT2_S_IFDIR)) {
-        int inode_num = allocate_inode(disk, bg, inodes_count);
         unsigned int inodes_count = sb->s_inodes_count;
+        int inode_num = allocate_inode(disk, bg, inodes_count);
 
         struct ext2_dir_entry *new_dir = malloc(sizeof(struct ext2_dir_entry));
         int new_inode = new_inode(sb, bg, inode_table, inode_num);
@@ -95,17 +95,30 @@ int main(argc, char **argv) {
 
         while( size < max){
             if( i == 11){
+                unsigned int block_count = sb->s_blocks_count;
+                int block_num = allocate_inode(disk, bg, block_count);
 
-            }
+                dest_inode->i_block[i] = new_block(sb, bg, block_num);
+                void * dest_block = get_block_ptr(dest_inode->i_block[i]);
+                dest_inode->i_blocks += 2;
 
-            dest_inode->i_blocks += 2;
-            if( (max - size) < EXT2_BLOCK_SIZE){
-                memcpy(get_block_ptr(dest_inode->i_block[i]), buffer, strlen(buffer));
+                while(size < max){
+                    int *bl = dest_block;
+                    *bl = new_block();
+                    memcpy(dest_block ,buffer, EXT2_BLOCK_SIZE);
+                    size += EXT2_BLOCK_SIZE;
+                    dest_block = (void *) dest_block + sizeof(int);
+                }
             } else {
-                memcpy(BLOCK_PTR(dest_inode->i_block[i]),buffer, EXT2_BLOCK_SIZE);
-                size += EXT2_BLOCK_SIZE;
-                buffer = (*buffer) + EXT2_BLOCK_SIZE;
-                i++;
+                dest_inode->i_blocks += 2;
+                if( (max - size) < EXT2_BLOCK_SIZE){
+                    memcpy(get_block_ptr(dest_inode->i_block[i]), buffer, strlen(buffer));
+                } else {
+                    memcpy(BLOCK_PTR(dest_inode->i_block[i]),buffer, EXT2_BLOCK_SIZE);
+                    size += EXT2_BLOCK_SIZE;
+                    buffer = (*buffer) + EXT2_BLOCK_SIZE;
+                    i++;
+                }
             }
         }
     }
