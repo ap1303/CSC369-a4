@@ -114,6 +114,7 @@ void reconfigure_dir(unsigned char *disk, struct ext2_inode parent, char *name, 
           int raw_length = 4 + 2 + 1 + 1 + dir -> name_len;
           int padded_length = raw_length + (4 - raw_length % 4);
           dir -> rec_len = padded_length;
+          rec_len_sum += padded_length;
           break;
       }
       rec_len_sum += rec_len;
