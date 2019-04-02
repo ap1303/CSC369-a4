@@ -127,3 +127,17 @@ void reconfigure_dir(unsigned char *disk, struct ext2_inode parent, char *name, 
   dir -> file_type = EXT2_FT_DIR;
   strncpy(dir -> name, name, dir -> name_len);
 }
+
+int new_inode(struct ext2_super_block *sb, struct ext2_group_desc *bg, struct ext2_inode *inode_table, int inode_num){
+    if(inode_num < 0){
+     return -1;
+    }
+
+    int inode = inode_num  + 1;
+
+    memset(&inode_table[inode_num - 1], 0, sizeof(struct ext2_inode));
+    bg->bg_free_inodes_count--;
+    sb->s_free_inodes_count--;
+
+    return inode;
+}
