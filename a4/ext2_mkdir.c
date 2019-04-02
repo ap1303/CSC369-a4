@@ -88,5 +88,6 @@ int main(int argc, char **argv) {
     parent_pointer -> name[0] = '.';
     parent_pointer -> name[1] = '.';
 
+    return 0;
 
 }
