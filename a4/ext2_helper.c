@@ -87,6 +87,8 @@ int get_last_name(unsigned char *disk, struct ext2_inode *inode_table, struct ex
 
          start = end;
          end = strchr(start + 1, '/');
+         current = inode_table + (inode - 1);
+
          if (end == NULL) {
              name = start + 1;
              name[strlen(start)] = '\0';
@@ -94,11 +96,9 @@ int get_last_name(unsigned char *disk, struct ext2_inode *inode_table, struct ex
              break;
          } else {
              memset(substring, 0, 1024);
-             strncpy(substring, start + 1, end - start);
+             strncpy(substring, start + 1, end - start - 1);
              substring[end - start] = '\0';
          }
-
-         current = inode_table + (inode - 1);
       }
       return 0;
 }
