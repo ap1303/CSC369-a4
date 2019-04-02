@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
     struct ext2_group_desc *bg = (struct ext2_group_desc *) (disk + 2048);
 
     unsigned int blocks_count = sb->s_blocks_count;
-    int block_num = allocate_block(disk, bg, blocks_count)
+    int block_num = allocate_block(disk, bg, blocks_count);
 
     unsigned int inodes_count = sb->s_inodes_count;
     int inode_num = allocate_inode(disk, bg, inodes_count);
@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     inode_table[inode_num].i_mode = EXT2_S_IFDIR;
     inode_table[inode_num].i_size = 1024;
     inode_table[inode_num].i_blocks = 2;
-    inode_table[inode_num].i_block[0] = block;
+    inode_table[inode_num].i_block[0] = block_num;
     inode_table[inode_num].i_links_count = 1;
 
     // create '.' for new inode

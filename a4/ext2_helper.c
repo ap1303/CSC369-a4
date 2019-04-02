@@ -23,6 +23,7 @@ int allocate_block(unsigned char *disk, struct ext2_group_desc *bg, unsigned int
             }
         }
     }
+    return 0;
 }
 
 int allocate_inode(unsigned char *disk, struct ext2_group_desc *bg, unsigned int inodes_count){
@@ -37,12 +38,13 @@ int allocate_inode(unsigned char *disk, struct ext2_group_desc *bg, unsigned int
                 return i * 8 + j;
             }
       }
-  }
+   }
+   return 0;
 }
 
 // search within a directory for a file or directory; if successful, return the
 // inode; if not, return -1
-int search_dir(char *substring, struct ext2_inode *current) {
+int search_dir(unsigned char *disk, char *substring, struct ext2_inode *current) {
     struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * current -> i_block[0]);
     int rec_len_sum = 0;
     int next_inode = -1;
@@ -71,7 +73,7 @@ int get_last_name(struct ext2_inode *inode_table, struct ext2_inode *root, char 
      if (end == NULL) {
          name = start;
          name[strlen(start)] = '\0';
-         result[0] = *root;
+         parent_inode[0] = *root;
      } else {
          strncpy(substring, start, end - start);
          substring[end - start] = '\0';
@@ -88,7 +90,7 @@ int get_last_name(struct ext2_inode *inode_table, struct ext2_inode *root, char 
          if (end == NULL) {
              name = start;
              name[strlen(start)] = '\0';
-             result[0] = *current;
+             parent_inode[0] = *current;
              break;
          } else {
              memset(substring, 0, 1024);
@@ -101,7 +103,7 @@ int get_last_name(struct ext2_inode *inode_table, struct ext2_inode *root, char 
       return 0;
 }
 
-int reconfigure_dir(unsigned char *disk, struct ext2_inode parent, char *name) {
+void reconfigure_dir(unsigned char *disk, struct ext2_inode parent, char *name, int inode_num) {
   // modify parent block to make room for the new one
   struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent.i_block[0]);
   int rec_len_sum = 0;
@@ -118,7 +120,7 @@ int reconfigure_dir(unsigned char *disk, struct ext2_inode parent, char *name) {
   }
 
   dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent.i_block[0] + rec_len_sum);
-  dir -> inode = inode;
+  dir -> inode = inode_num;
   dir -> rec_len = EXT2_BLOCK_SIZE - rec_len_sum;
   dir -> name_len = strlen(name);
   dir -> file_type = EXT2_FT_DIR;
