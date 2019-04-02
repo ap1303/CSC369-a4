@@ -9,16 +9,18 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 
+#define IS_IN_USE(BYTE, BIT) ((BYTE) & (1 << BIT))
 
+// allocate block; if there is no free blocks, return 0;
 int allocate_block(unsigned char *disk, struct ext2_group_desc *bg, unsigned int blocks_count) {
     unsigned char *block_bitmap = disk + bg->bg_block_bitmap * EXT2_BLOCK_SIZE;
     int size = blocks_count / 8;
     for(int i = 0; i < size; i++) {
         unsigned char e = block_bitmap[i];
         for(int j = 0; j < 8; j++) {
-            int temp = !!((e >> i) & 0x01);
+            int temp = !!((e >> j) & 0x01);
             if (temp == 0) {
-                e |= 1 << i;
+                block_bitmap[i] |= 1 << j;
                 return i * 8 + j;
             }
         }
@@ -26,15 +28,16 @@ int allocate_block(unsigned char *disk, struct ext2_group_desc *bg, unsigned int
     return 0;
 }
 
+// allocate block; if there is no free inodes, return 0;
 int allocate_inode(unsigned char *disk, struct ext2_group_desc *bg, unsigned int inodes_count){
     unsigned char *inode_bitmap = disk + bg->bg_inode_bitmap * 1024;
     int inode_size = inodes_count / 8;
     for(int i = 0; i < inode_size; i++) {
         unsigned char e = inode_bitmap[i];
         for(int j = 0; j < 8; j++) {
-            int temp = !!((e >> i) & 0x01);
+            int temp = !!((e >> j) & 0x01);
             if (temp == 0) {
-                e |= 1 << i;
+                inode_bitmap[i] |= 1 << j;
                 return i * 8 + j;
             }
         }
