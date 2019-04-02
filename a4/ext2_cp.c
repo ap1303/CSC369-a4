@@ -84,18 +84,29 @@ int main(argc, char **argv) {
         // TODO add new dir to the parent inode
 
 
+
         int size = 0;
         int max = strlen(buffer);
         int i = 0;
+        struct ext2_inode * dest_inode = find_inode(new_inode, bg, inode_table);
+        dest_inode->i_size = max;
+        dest_inode->i_mode &= EXT2_S_IFREG;
+        dest_inode->i_dtime = 0;
 
         while( size < max){
             if( i == 11){
-            }
-            
-            if( (max - size) < EXT2_BLOCK_SIZE){
+
             }
 
-            i++;
+            dest_inode->i_blocks += 2;
+            if( (max - size) < EXT2_BLOCK_SIZE){
+                memcpy(get_block_ptr(dest_inode->i_block[i]), buffer, strlen(buffer));
+            } else {
+                memcpy(BLOCK_PTR(dest_inode->i_block[i]),buffer, EXT2_BLOCK_SIZE);
+                size += EXT2_BLOCK_SIZE;
+                buffer = (*buffer) + EXT2_BLOCK_SIZE;
+                i++;
+            }
         }
     }
 

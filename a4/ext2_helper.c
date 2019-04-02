@@ -141,3 +141,11 @@ int new_inode(struct ext2_super_block *sb, struct ext2_group_desc *bg, struct ex
 
     return inode;
 }
+
+unsigned int get_block_ptr(unsigned char *disk, int index) {
+    return disk + (index) * EXT2_BLOCK_SIZE;
+}
+
+struct ext2_inode * find_inode(unsigned int index, struct ext2_group_desc *bg, unsigned char* inode_table ){
+    return (struct ext2_inode *)(inode_table + (sizeof(struct ext2_inode) * (index- 1)));
+}
