@@ -16,9 +16,9 @@ int allocate_block(unsigned char *disk, struct ext2_group_desc *bg, unsigned int
     for(int i = 0; i < size; i++) {
         unsigned char e = block_bitmap[i];
         for(int j = 0; j < 8; j++) {
-            int temp = !!((e << i) & 0x01);
+            int temp = !!((e >> i) & 0x01);
             if (temp == 0) {
-                e |= 0x80 >> i;
+                e |= 1 << i;
                 return i * 8 + j;
             }
         }
@@ -32,12 +32,12 @@ int allocate_inode(unsigned char *disk, struct ext2_group_desc *bg, unsigned int
     for(int i = 0; i < inode_size; i++) {
         unsigned char e = inode_bitmap[i];
         for(int j = 0; j < 8; j++) {
-            int temp = !!((e << i) & 0x01);
+            int temp = !!((e >> i) & 0x01);
             if (temp == 0) {
-                e |= 0X80 >> i;
+                e |= 1 << i;
                 return i * 8 + j;
             }
-      }
+        }
    }
    return 0;
 }
@@ -90,8 +90,8 @@ int get_last_name(unsigned char *disk, struct ext2_inode *inode_table, struct ex
          current = inode_table + (inode - 1);
 
          if (end == NULL) {
-             name = start + 1;
-             name[strlen(start)] = '\0';
+             strncpy(name, start + 1, strlen(start + 1));
+             name[strlen(start + 1)] = '\0';
              parent_inode[0] = *current;
              break;
          } else {
