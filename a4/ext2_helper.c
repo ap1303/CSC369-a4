@@ -145,7 +145,7 @@ int new_inode(struct ext2_super_block *sb, struct ext2_group_desc *bg, struct ex
     return inode;
 }
 
-int new_block(struct ext2_super_block *sb, struct ext2_group_desc *bg, int block_num){
+int new_block(unsigned char *disk, struct ext2_super_block *sb, struct ext2_group_desc *bg, int block_num){
     if(block_num < 0){
      return -1;
     }
@@ -159,10 +159,11 @@ int new_block(struct ext2_super_block *sb, struct ext2_group_desc *bg, int block
     return block;
 }
 
-unsigned int get_block_ptr(unsigned char *disk, int index) {
-    return disk + (index) * EXT2_BLOCK_SIZE;
+void* get_block_ptr(unsigned char *disk, int index) {
+    return (disk + (index) * EXT2_BLOCK_SIZE);
 }
 
-struct ext2_inode * find_inode(unsigned int index, struct ext2_group_desc *bg, unsigned char* inode_table ){
+struct ext2_inode * find_inode(unsigned int index, struct ext2_group_desc *bg, unsigned char *disk){
+    unsigned char * inode_table = (unsigned char *)(disk + EXT2_BLOCK_SIZE * bg->bg_inode_table);
     return (struct ext2_inode *)(inode_table + (sizeof(struct ext2_inode) * (index- 1)));
 }
