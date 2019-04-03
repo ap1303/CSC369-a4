@@ -1,13 +1,3 @@
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include "ext2.h"
 #include "ext2_helper.c"
 
 unsigned char *disk;
@@ -19,9 +9,9 @@ int main(int argc, char **argv) {
     }
 
     int fd = open(argv[1], O_RDWR);
-	  if(fd == -1) {
-		   perror("open");
-		   exit(1);
+	if(fd == -1) {
+		perror("open");
+		exit(1);
     }
 
     disk = mmap(NULL, 128 * 1024, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -63,7 +53,7 @@ int main(int argc, char **argv) {
     char name[1024];
     int discontinuities = get_last_name(disk, inode_table, root, path, parent, name);
     if (discontinuities == 0) {
-        if (search_dir(disk, name, parent) != -1) {
+        if (search_dir(disk, name, parent) != NULL) {
             return EEXIST;
         }
     } else {
@@ -71,7 +61,7 @@ int main(int argc, char **argv) {
     }
 
     // modify parent block to insert a new entry
-    explore_parent(parent, disk, name, inode);
+    explore_parent(parent, disk, name, inode, 0);
     
     // initialize inode for new entry
     inode_table[inode - 1].i_mode = EXT2_S_IFDIR;

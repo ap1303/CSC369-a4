@@ -1,12 +1,3 @@
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/mman.h>
-#include "ext2.h"
 #include "ext2_helper.c"
 
 int main(int argc, char **argv) {
@@ -16,6 +7,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    // get the paths
     char source_path[strlen(argv[2]) + 1];
     char dest_path[strlen(argv[3]) + 1];
 
@@ -25,6 +17,16 @@ int main(int argc, char **argv) {
     strncpy(source_path, argv[2], strlen(argv[2]));
     strncpy(dest_path, argv[3], strlen(argv[3]));
 
+    // zero out the trailing slash, if there is one.
+    if (source_path[strlen(source_path) - 1] == '/') {
+        source_path[strlen(source_path) - 1] = '\0';
+    }
+    if (dest_path[strlen(dest_path) - 1] == '/') {
+        dest_path[strlen(dest_path) - 1] = '\0';
+    }
+
+
+    // read in file
     char *buffer = NULL;
     FILE *file = fopen(source_path, "r");
     if(file == NULL){
@@ -41,6 +43,7 @@ int main(int argc, char **argv) {
         fclose(file);
     }
 
+    // read in the disk
     int fd = open(argv[1], O_RDWR);
 	if(fd == -1) {
 		perror("open");
@@ -53,6 +56,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
+    // decode destination path
     struct ext2_super_block *sb = (struct ext2_super_block *)(disk + 1024);
     struct ext2_group_desc *bg = (struct ext2_group_desc *) (disk + 2048);
 
@@ -66,26 +70,36 @@ int main(int argc, char **argv) {
         printf("get_last_name err\n");
         return ENOENT;
     }
+    struct ext2_dir_entry *ent = search_dir(disk, file_name, dest_inode);
+    if (ent == NULL) {
+        return ENOENT;
+    }
 
-    if (dest_inode && (dest_inode->i_mode & EXT2_S_IFDIR)) {
+    if (ent -> file_type == EXT2_FT_DIR) {
+        // allocate new inode for the about-to-be-created file
         unsigned int inodes_count = sb->s_inodes_count;
         int inode_num = allocate_inode(disk, bg, inodes_count);
         if (inode_num == 0) {
             return ENOMEM;
         }
-
         int n_inode = new_inode(sb, bg, inode_table, inode_num);
 
-        explore_parent(dest_inode, disk, file_name, n_inode);
-
+        // modify structure of the parent to create new dir entry for the file 
+        explore_parent(inode_table + (ent -> inode - 1), disk, file_name, n_inode, 1);
+    
+        // copy file data
         int size = 0;
         int max = strlen(buffer);
         int i = 0;
+
+        // inode pre-setup
         inode_table[inode_num].i_size = max;
         inode_table[inode_num].i_mode &= EXT2_S_IFREG;
         inode_table[inode_num].i_links_count = 1;
 
         unsigned int block_count = sb->s_blocks_count;
+
+        // if the file is containable within the first 12 data blocks
         while(size < max && i < 12){
             int block_num = allocate_block(disk, bg, block_count);
             if (block_num == 0) {
@@ -106,29 +120,31 @@ int main(int argc, char **argv) {
             }      
         }
 
-        if (i == 12 && size < max) {
-            int block_num = allocate_block(disk, bg, block_count);
-            if (block_num == 0) {
-                return ENOMEM;
-            }
-            int block = new_block(sb, bg, disk, block_num);
+        // if the file can't be contained within the first 12 data blocks
+        // in this case, add one level of indirection
+        //if (i == 12 && size < max) {
+        //    int block_num = allocate_block(disk, bg, block_count);
+        //    if (block_num == 0) {
+        //        return ENOMEM;
+        //    }
+        //    int block = new_block(sb, bg, disk, block_num);
 
-            inode_table[inode_num].i_block[12] = block;
-            inode_table[inode_num].i_blocks += 2;
+        //    inode_table[inode_num].i_block[12] = block;
+        //    inode_table[inode_num].i_blocks += 2;
 
-            unsigned int *indirect_block = (unsigned int *) BLOCK_PTR(block);
+        //    unsigned int *indirect_block = (unsigned int *) BLOCK_PTR(block);
 
-            for(int i = 0; i < EXT2_BLOCK_SIZE / 4; i++) {
-                *(indirect_block++) = block;
-                if((max - size) < EXT2_BLOCK_SIZE){
-                    memcpy(BLOCK_PTR(block), buffer, strlen(buffer));
-                    break;
-                } else {
-                    memcpy(BLOCK_PTR(block), buffer, EXT2_BLOCK_SIZE);
-                    size += EXT2_BLOCK_SIZE;
-                    buffer = buffer + EXT2_BLOCK_SIZE;
-                }      
-            }
-        }
+        //    for(int i = 0; i < EXT2_BLOCK_SIZE / 4; i++) {
+        //        *(indirect_block++) = block;
+        //        if((max - size) < EXT2_BLOCK_SIZE){
+        //            memcpy(BLOCK_PTR(block), buffer, strlen(buffer));
+        //            break;
+        //        } else {
+        //            memcpy(BLOCK_PTR(block), buffer, EXT2_BLOCK_SIZE);
+        //            size += EXT2_BLOCK_SIZE;
+        //            buffer = buffer + EXT2_BLOCK_SIZE;
+        //        }      
+        //    } 
+        // }       
     }
 }

@@ -48,25 +48,22 @@ int allocate_inode(unsigned char *disk, struct ext2_group_desc *bg, unsigned int
 
 // search within a directory for a file or directory; if successful, return the
 // inode; if not, return -1
-int search_dir(unsigned char *disk, char *substring, struct ext2_inode *current) {
+struct ext2_dir_entry *search_dir(unsigned char *disk, char *substring, struct ext2_inode *current) {
     struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * current -> i_block[0]);
     int rec_len_sum = 0;
-    int next_inode = -1;
+    struct ext2_dir_entry *ent = NULL;
     while (rec_len_sum < EXT2_BLOCK_SIZE) {
         dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * current -> i_block[0] + rec_len_sum);
-        unsigned int inode = dir -> inode;
         unsigned short rec_len = dir -> rec_len;
         char *name = dir -> name;
         if (strcmp(name, substring) == 0) {
-            next_inode = inode;
+            ent = dir;
             break;
         }
         rec_len_sum += rec_len;
     }
-    if (next_inode == -1) {
-        return -1;
-    }
-    return next_inode;
+    
+    return ent;
 }
 
 // Get the name of last entry in path, and the parent inode
@@ -75,28 +72,28 @@ int get_last_name(unsigned char *disk, struct ext2_inode *inode_table, struct ex
      char *end = strchr(start, '/');
      char *substring = malloc(sizeof(char) * 1024);
      if (end == NULL) {
-         name = start;
+         strncpy(name, start, strlen(start));
          name[strlen(start)] = '\0';
-         parent_inode[0] = *root;
+         *parent_inode = *root;
      } else {
          strncpy(substring, start, end - start);
          substring[end - start] = '\0';
      }
      struct ext2_inode *current = root;
      while (end != NULL) {
-         int inode = search_dir(disk, substring, current);
-         if (inode == -1) {
+         struct ext2_dir_entry *ent = search_dir(disk, substring, current);
+         if (ent == NULL) {
              return ENOENT;
          }
 
          start = end;
          end = strchr(start + 1, '/');
-         current = inode_table + (inode - 1);
+         current = inode_table + (ent -> inode - 1);
 
          if (end == NULL) {
              strncpy(name, start + 1, strlen(start + 1));
              name[strlen(start + 1)] = '\0';
-             parent_inode[0] = *current;
+             *parent_inode = *current;
              break;
          } else {
              memset(substring, 0, 1024);
@@ -143,18 +140,19 @@ int reconfigure_dir(unsigned char *disk, struct ext2_inode parent, int current_b
   return 0; 
 }
 
-void explore_parent(struct ext2_inode *parent, unsigned char *disk, char *name, int inode) {
+void explore_parent(struct ext2_inode *parent, unsigned char *disk, char *name, int inode, int ft) {
      for (int i = 0; i < 11; i++) {
         if (parent -> i_block[i] != 0 && parent -> i_block[i + 1] == 0) {
-            int success = reconfigure_dir(disk, *parent, parent -> i_block[i], name, inode, 0);
+            int success = reconfigure_dir(disk, *parent, parent -> i_block[i], name, inode, ft);
             if (success == 1) {
                 // not enough space on the last block
                 parent -> i_block[i + 1] = inode;
-                success = reconfigure_dir(disk, *parent, parent -> i_block[i+1], name, inode, 0);
+                success = reconfigure_dir(disk, *parent, parent -> i_block[i+1], name, inode, ft);
             } else {
                 // enough space on the last block
                 // in this case, do nothing
-            }    
+            } 
+            break;   
         }
     }
 }
