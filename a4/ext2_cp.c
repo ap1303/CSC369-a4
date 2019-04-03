@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
     char file_name[1024];
 
     int error = get_last_name(disk, inode_table, root, dest_path, dest_inode, file_name);
-    if (error == -1) {
+    if (error == ENOENT) {
         printf("get_last_name err\n");
         return ENOENT;
     }
@@ -70,57 +70,64 @@ int main(int argc, char **argv) {
     if (dest_inode && (dest_inode->i_mode & EXT2_S_IFDIR)) {
         unsigned int inodes_count = sb->s_inodes_count;
         int inode_num = allocate_inode(disk, bg, inodes_count);
-
-        struct ext2_dir_entry *new_dir = malloc(sizeof(struct ext2_dir_entry));
-        int n_inode = new_inode(sb, bg, inode_table, inode_num);
-        if(n_inode < 0){
-            free(new_dir);
-            perror("No free inodes");
-            return 0;
+        if (inode_num == 0) {
+            return ENOMEM;
         }
 
-        new_dir->inode = n_inode;
-        new_dir->file_type = EXT2_FT_REG_FILE;
-        strncpy(new_dir->name, file_name, strlen(file_name));
-        new_dir->name_len = strlen(file_name);
-        new_dir->rec_len = 0;
-        new_dir = add_dir(disk, dest_inode, new_dir);
+        int n_inode = new_inode(sb, bg, inode_table, inode_num);
+
+        explore_parent(dest_inode, disk, file_name, n_inode);
 
         int size = 0;
         int max = strlen(buffer);
         int i = 0;
-        struct ext2_inode * dest_inode = find_inode(n_inode, bg, disk);
-        dest_inode->i_size = max;
-        dest_inode->i_mode &= EXT2_S_IFREG;
-        dest_inode->i_dtime = 0;
+        inode_table[inode_num].i_size = max;
+        inode_table[inode_num].i_mode &= EXT2_S_IFREG;
+        inode_table[inode_num].i_links_count = 1;
 
-        while( size < max){
-            if( i == 11){
-                unsigned int block_count = sb->s_blocks_count;
-                int block_num = allocate_inode(disk, bg, block_count);
-
-                dest_inode->i_block[i] = new_block(disk, sb, bg, block_num);
-                void * dest_block = get_block_ptr(disk, dest_inode->i_block[i]);
-                dest_inode->i_blocks += 2;
-
-                while(size < max){
-                    int *bl = dest_block;
-                    *bl = new_block(disk, sb, bg, block_num);
-                    memcpy(dest_block ,buffer, EXT2_BLOCK_SIZE);
-                    size += EXT2_BLOCK_SIZE;
-                    dest_block = (void *) dest_block + sizeof(int);
-                }
+        unsigned int block_count = sb->s_blocks_count;
+        while(size < max && i < 12){
+            int block_num = allocate_block(disk, bg, block_count);
+            if (block_num == 0) {
+                return ENOMEM;
+            }
+            
+            int block = new_block(sb, bg, disk, block_num);
+            inode_table[inode_num].i_block[i] = block;
+            inode_table[inode_num].i_blocks += 2;
+            if( (max - size) < EXT2_BLOCK_SIZE){
+                memcpy(BLOCK_PTR(inode_table[inode_num].i_block[i]), buffer, strlen(buffer));
+                break;
             } else {
-                dest_inode->i_blocks += 2;
-                if( (max - size) < EXT2_BLOCK_SIZE){
-                    memcpy(get_block_ptr(disk, dest_inode->i_block[i]), buffer, strlen(buffer));
+                memcpy(BLOCK_PTR(inode_table[inode_num].i_block[i]), buffer, EXT2_BLOCK_SIZE);
+                size += EXT2_BLOCK_SIZE;
+                buffer = buffer + EXT2_BLOCK_SIZE;
+                i++;
+            }      
+        }
+
+        if (i == 12 && size < max) {
+            int block_num = allocate_block(disk, bg, block_count);
+            if (block_num == 0) {
+                return ENOMEM;
+            }
+            int block = new_block(sb, bg, disk, block_num);
+
+            inode_table[inode_num].i_block[12] = block;
+            inode_table[inode_num].i_blocks += 2;
+
+            unsigned int *indirect_block = (unsigned int *) BLOCK_PTR(block);
+
+            for(int i = 0; i < EXT2_BLOCK_SIZE / 4; i++) {
+                *(indirect_block++) = block;
+                if((max - size) < EXT2_BLOCK_SIZE){
+                    memcpy(BLOCK_PTR(block), buffer, strlen(buffer));
                     break;
                 } else {
-                    memcpy(get_block_ptr(disk, dest_inode->i_block[i]),buffer, EXT2_BLOCK_SIZE);
+                    memcpy(BLOCK_PTR(block), buffer, EXT2_BLOCK_SIZE);
                     size += EXT2_BLOCK_SIZE;
                     buffer = buffer + EXT2_BLOCK_SIZE;
-                    i++;
-                }
+                }      
             }
         }
     }
