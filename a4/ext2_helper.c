@@ -131,6 +131,32 @@ void reconfigure_dir(unsigned char *disk, struct ext2_inode parent, char *name, 
   strncpy(dir -> name, name, dir -> name_len);
 }
 
+struct ext2_dir_entry * add_dir(unsigned char *disk, struct ext2_inode *parent, struct ext2_dir_entry *new_dir) {
+  // modify parent block to make room for the new one
+  int rec_len_sum = 0;
+  while (rec_len_sum < EXT2_BLOCK_SIZE) {
+      struct ext2_dir_entry *parent_dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent->i_block[0] + rec_len_sum);
+      unsigned short rec_len = parent_dir -> rec_len;
+      if (rec_len_sum + rec_len == EXT2_BLOCK_SIZE) {
+          int raw_length = 4 + 2 + 1 + 1 + parent_dir -> name_len;
+          int padded_length = raw_length + (4 - raw_length % 4);
+          parent_dir -> rec_len = padded_length;
+          rec_len_sum += padded_length;
+          break;
+      }
+      rec_len_sum += rec_len;
+  }
+
+  struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent->i_block[0] + rec_len_sum);
+  dir -> inode = new_dir->inode;
+  dir -> rec_len = EXT2_BLOCK_SIZE - rec_len_sum;
+  dir -> name_len = strlen(new_dir->name);
+  dir -> file_type = new_dir->file_type;
+  strncpy(dir -> name, new_dir->name, new_dir -> name_len);
+
+  return dir;
+}
+
 int new_inode(struct ext2_super_block *sb, struct ext2_group_desc *bg, struct ext2_inode *inode_table, int inode_num){
     if(inode_num < 0){
      return -1;

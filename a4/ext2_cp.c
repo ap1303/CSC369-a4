@@ -12,7 +12,7 @@
 int main(int argc, char **argv) {
 
     if(argc != 4) {
-        fprintf(stderr, "Usage: ext2_cp <image file name> <path to source file> <path to dest> \n");
+        fprintf(stderr, "Usage: cp <image file name> <path to source file> <path to dest> \n");
         exit(1);
     }
 
@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
 
     int error = get_last_name(disk, inode_table, root, dest_path, dest_inode, file_name);
     if (error == -1) {
+        printf("get_last_name err\n");
         return ENOENT;
     }
 
@@ -77,13 +78,13 @@ int main(int argc, char **argv) {
             perror("No free inodes");
             return 0;
         }
+
         new_dir->inode = n_inode;
         new_dir->file_type = EXT2_FT_REG_FILE;
         strncpy(new_dir->name, file_name, strlen(file_name));
         new_dir->name_len = strlen(file_name);
         new_dir->rec_len = 0;
-
-        // TODO add new dir to the parent inode
+        new_dir = add_dir(disk, dest_inode, new_dir);
 
         int size = 0;
         int max = strlen(buffer);
@@ -113,6 +114,7 @@ int main(int argc, char **argv) {
                 dest_inode->i_blocks += 2;
                 if( (max - size) < EXT2_BLOCK_SIZE){
                     memcpy(get_block_ptr(disk, dest_inode->i_block[i]), buffer, strlen(buffer));
+                    break;
                 } else {
                     memcpy(get_block_ptr(disk, dest_inode->i_block[i]),buffer, EXT2_BLOCK_SIZE);
                     size += EXT2_BLOCK_SIZE;
@@ -122,7 +124,4 @@ int main(int argc, char **argv) {
             }
         }
     }
-
-
-
 }
