@@ -84,49 +84,13 @@ int main(int argc, char **argv)  {
         }
         int inode = new_inode(sb, bg, inode_table, inode_num);
 
-        // copy file data
-        int size = 0;
-        int max = strlen(source_path);
-        int i = 0;
-
-        // inode pre-setup
-        memset(inode_table + inode_num, 0, sizeof(struct ext2_inode));
-        inode_table[inode_num].i_size = max;
-        inode_table[inode_num].i_mode = EXT2_S_IFREG;
-        inode_table[inode_num].i_links_count = 1;
-        inode_table[inode_num].i_blocks = 0;
-        inode_table[inode_num].i_dtime = 0;
-
         // append to parent 
         explore_parent(parent, disk, dest_name, inode, 2);
 
         unsigned int block_count = sb->s_blocks_count;
 
-        // if the file is containable within the first 12 data blocks
-        while(size < max && i < 12){
-            int block_num = allocate_block(disk, bg, block_count);
-            if (block_num == 0) {
-                free(source_parent);
-                free(dest_parent);
-                close(fd);
-                return ENOMEM;
-            }
+        write_to_data_blocks(source_path, inode_num, block_count, parent, -1, sb, bg, inode_table, disk);
 
-            int block = new_block(sb, bg, disk, block_num);
-            inode_table[inode_num].i_block[i] = block;
-            inode_table[inode_num].i_blocks += 2;
-            if((max - size) < EXT2_BLOCK_SIZE){
-               unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-               memcpy(dest, source_path + size, (max - size));
-               break;
-            } else {
-               unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-               memcpy(dest, source_path + size, EXT2_BLOCK_SIZE);
-               size += EXT2_BLOCK_SIZE;
-               //buffer = buffer + EXT2_BLOCK_SIZE;
-               i++;
-            }
-        }
-    }
-    
+    }    
 }
+

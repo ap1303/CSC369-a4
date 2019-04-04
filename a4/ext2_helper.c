@@ -216,6 +216,95 @@ int search_blk(unsigned char *disk, char *substring, int blk, char type) {
     return -1;
 }
 
+int write_to_data_blocks(char *buffer, int inode_num, unsigned int block_count, struct ext2_inode *dest_inode, int fd, struct ext2_super_block *sb, struct ext2_group_desc *bg, struct ext2_inode *inode_table, unsigned char *disk) {
+    // copy file data
+    int size = 0;
+    int max = strlen(buffer);
+    int i = 0;
+
+    // inode pre-setup
+    memset(inode_table + inode_num, 0, sizeof(struct ext2_inode));
+    inode_table[inode_num].i_size = max;
+    inode_table[inode_num].i_mode = EXT2_S_IFREG;
+    inode_table[inode_num].i_links_count = 1;
+    inode_table[inode_num].i_blocks = 0;
+    inode_table[inode_num].i_dtime = 0;
+
+    // if the file is containable within the first 12 data blocks
+    while(size < max && i < 12){
+        int block_num = allocate_block(disk, bg, block_count);
+        if (block_num == 0) {
+            free(buffer);
+            free(dest_inode);
+            close(fd);
+            return ENOMEM;
+        }
+
+        int block = new_block(sb, bg, disk, block_num);
+        inode_table[inode_num].i_block[i] = block;
+        inode_table[inode_num].i_blocks += 2;
+        if((max - size) < EXT2_BLOCK_SIZE){
+           unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
+           memcpy(dest, buffer + size, strlen(buffer));
+           break;
+        } else {
+           unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
+           memcpy(dest, buffer + size, EXT2_BLOCK_SIZE);
+           size += EXT2_BLOCK_SIZE;
+           //buffer = buffer + EXT2_BLOCK_SIZE;
+           i++;
+        }
+    }
+
+        // if the file can't be contained within the first 12 data blocks
+        // in this case, add one level of indirection
+    if (i == 12 && size < max) {
+        int block_num = allocate_block(disk, bg, block_count);
+        if (block_num == 0) {
+            free(buffer);
+            free(dest_inode);
+            if (fd != -1) {
+                close(fd);
+            }
+            return ENOMEM;
+        }
+        int block = new_block(sb, bg, disk, block_num);
+
+        inode_table[inode_num].i_block[12] = block;
+        inode_table[inode_num].i_blocks += 2;
+
+        unsigned int *indirect_block = (unsigned int *) BLOCK_PTR(block);
+
+        for(int i = 0; i < EXT2_BLOCK_SIZE / 4; i++) {
+            int block_num = allocate_block(disk, bg, block_count);
+            if (block_num == 0) {
+                free(buffer);
+                free(dest_inode);
+                close(fd);
+                return ENOMEM;
+            }
+            int block = new_block(sb, bg, disk, block_num);
+
+            inode_table[inode_num].i_blocks += 2;
+
+            *(indirect_block) = block;
+            indirect_block += 1;
+
+            if((max - size) < EXT2_BLOCK_SIZE){
+                unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
+                memcpy(dest, buffer + size, strlen(buffer));
+                break;
+            } else {
+                unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
+                memcpy(dest, buffer + size, EXT2_BLOCK_SIZE);
+                size += EXT2_BLOCK_SIZE;
+                //buffer = buffer + EXT2_BLOCK_SIZE;
+            }
+        }
+    }
+    return 0;
+}
+
 /*
 int search_in_inode(unsigned char *disk, struct ext2_inode *inode, char type, char *file_name) {
     int i;
