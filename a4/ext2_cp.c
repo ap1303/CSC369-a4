@@ -94,8 +94,10 @@ int main(int argc, char **argv) {
 
     // inode pre-setup
     inode_table[inode_num].i_size = max;
-    inode_table[inode_num].i_mode &= EXT2_S_IFREG;
+    inode_table[inode_num].i_mode = EXT2_S_IFREG;
     inode_table[inode_num].i_links_count = 1;
+    inode_table[inode_num].i_blocks = 0;
+    memset(inode_table[inode_num].i_block, 0, 15 * sizeof(int));
 
     unsigned int block_count = sb->s_blocks_count;
 
@@ -110,11 +112,11 @@ int main(int argc, char **argv) {
         inode_table[inode_num].i_block[i] = block;
         inode_table[inode_num].i_blocks += 2;
         if((max - size) < EXT2_BLOCK_SIZE){
-           unsigned char *dest = disk + block_num * EXT2_BLOCK_SIZE;
+           unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
            memcpy(dest, buffer, strlen(buffer));
            break;
         } else {
-           unsigned char *dest = disk + block_num * EXT2_BLOCK_SIZE;
+           unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
            memcpy(dest, buffer, EXT2_BLOCK_SIZE);
            size += EXT2_BLOCK_SIZE;
            buffer = buffer + EXT2_BLOCK_SIZE;
@@ -137,7 +139,15 @@ int main(int argc, char **argv) {
         unsigned int *indirect_block = (unsigned int *) BLOCK_PTR(block);
 
         for(int i = 0; i < EXT2_BLOCK_SIZE / 4; i++) {
-            *(indirect_block++) = block;
+            int block_num = allocate_block(disk, bg, block_count);
+            if (block_num == 0) {
+                return ENOMEM;
+            }
+            int block = new_block(sb, bg, disk, block_num);
+
+            *(indirect_block) = block;
+            indirect_block += 1;
+
             if((max - size) < EXT2_BLOCK_SIZE){
                 unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
                 memcpy(dest, buffer, strlen(buffer));
