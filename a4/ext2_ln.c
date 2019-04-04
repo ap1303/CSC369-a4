@@ -117,11 +117,11 @@ int main(int argc, char **argv)  {
             inode_table[inode_num].i_blocks += 2;
             if((max - size) < EXT2_BLOCK_SIZE){
                unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-               memcpy(dest, source_name + size, (max - size));
+               memcpy(dest, source_path + size, (max - size));
                break;
             } else {
                unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-               memcpy(dest, source_name + size, EXT2_BLOCK_SIZE);
+               memcpy(dest, source_path + size, EXT2_BLOCK_SIZE);
                size += EXT2_BLOCK_SIZE;
                //buffer = buffer + EXT2_BLOCK_SIZE;
                i++;
