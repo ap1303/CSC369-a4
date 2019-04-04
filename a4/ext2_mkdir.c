@@ -10,13 +10,13 @@ int main(int argc, char **argv) {
 
     int fd = open(argv[1], O_RDWR);
 	if(fd == -1) {
-		perror("open");
+		//perror("open");
 		exit(1);
     }
 
     disk = mmap(NULL, 128 * 1024, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if(disk == MAP_FAILED) {
-        perror("mmap");
+        //perror("mmap");
         exit(1);
     }
 
@@ -56,16 +56,19 @@ int main(int argc, char **argv) {
     int discontinuities = get_last_name(disk, inode_table, root, path, parent, name, &p_inode_index);
     if (discontinuities == 0) {
         if (search_dir(disk, name, parent) != NULL) {
+            free(parent);
             return EEXIST;
         }
     } else {
-      return ENOENT;
+        free(parent);
+        return ENOENT;
     }
 
     // modify parent block to insert a new entry
     explore_parent(parent, disk, name, inode, 0);
     
     // initialize inode for new entry
+    memset(inode_table + inode - 1, 0, sizeof(struct ext2_inode));
     inode_table[inode - 1].i_mode = EXT2_S_IFDIR;
     inode_table[inode - 1].i_size = 1024;
     inode_table[inode - 1].i_blocks = 2;
@@ -88,6 +91,7 @@ int main(int argc, char **argv) {
     parent_pointer -> name[0] = '.';
     parent_pointer -> name[1] = '.';
 
+    free(parent);
     return 0;
 
 }
