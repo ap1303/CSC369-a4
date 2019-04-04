@@ -253,16 +253,16 @@ int search_in_inode(unsigned char *disk, struct ext2_inode *inode, char type, ch
     int *t_block = (int *)(disk + ((inode.i_block)[14] * EXT2_BLOCK_SIZE));
     for (i = 0; i < 256; i++) {
         int *d_block = (int *)(disk + (t_block[i]) * EXT2_BLOCK_SIZE);
-            for (k = 0; k < 256; k++) {
-                int *i_block= (int *)(disk + d_block[k] * EXT2_BLOCK_SIZE);
-                res = search_blk(disk, file_name, i_block[i], type);
+        for (k = 0; k < 256; k++) {
+            int *i_block= (int *)(disk + d_block[k] * EXT2_BLOCK_SIZE);
+            res = search_blk(disk, file_name, i_block[i], type);
 
-                if (res > 0) {
-                    return inode.i_block[k];
-                } else if (i_block[k + 1] == 0) {
-                    return -1;
-                }
+            if (res > 0) {
+                return inode.i_block[k];
+            } else if (i_block[k + 1] == 0) {
+                return -1;
             }
+        }
     }
 
     return -1;
