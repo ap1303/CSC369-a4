@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
                 break;
             } else {
                 unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-                memcpy(dest, buffer, EXT2_BLOCK_SIZE);
+                memcpy(dest, buffer + size, EXT2_BLOCK_SIZE);
                 size += EXT2_BLOCK_SIZE;
                 //buffer = buffer + EXT2_BLOCK_SIZE;
             }
