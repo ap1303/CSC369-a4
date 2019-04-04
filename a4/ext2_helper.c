@@ -347,7 +347,6 @@ void free_block_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2
 
 int rm_dir(unsigned char *disk, struct ext2_dir_entry* target, struct ext2_inode* f_inode, char *name) {
     int len = strlen(name);
-
     int target_offset;
     int pre_offset;
     for(int i = 0; i < f_inode->i_blocks/2; i ++){
@@ -371,7 +370,7 @@ int rm_dir(unsigned char *disk, struct ext2_dir_entry* target, struct ext2_inode
                         target->inode = 0;
                     }
 
-                    pre->rec_len += file_len;
+                    pre->rec_len += target->rec_len;
                     return 0;
                 }
             }
