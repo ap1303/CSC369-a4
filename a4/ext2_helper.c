@@ -331,8 +331,8 @@ void free_inode_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2
     bit_index = (idx - 1)%8;
     inode_bitmap[byte_index] &= ~(1 << (bit_index));
 
-    sb->s_free_inode_count += 1;
-	bg->bg_free_inode_count += 1;
+    sb->s_free_inodes_count += 1;
+	bg->bg_free_inodes_count += 1;
 }
 
 void free_block_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2_super_block *sb, int block) {
