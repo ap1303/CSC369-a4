@@ -11,3 +11,6 @@ ln: ext2_ln.c ext2_helper.c
 
 rm: ext2_rm.c ext2_helper.c
 		gcc -Wall -g -o ext2_rm ext2_rm.c
+
+checker: ext2_checker.c ext2_helper.c
+                 gcc -Wall -g -o ext2_checker ext2_checker.c
