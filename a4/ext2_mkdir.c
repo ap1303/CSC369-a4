@@ -51,7 +51,9 @@ int main(int argc, char **argv) {
     // traverse file path, see if there is discontinuities
     struct ext2_inode *parent = malloc(sizeof(struct ext2_inode));
     char name[1024];
-    int discontinuities = get_last_name(disk, inode_table, root, path, parent, name);
+    memset(name, 0, 1024);
+    int p_inode_index = 0;
+    int discontinuities = get_last_name(disk, inode_table, root, path, parent, name, &p_inode_index);
     if (discontinuities == 0) {
         if (search_dir(disk, name, parent) != NULL) {
             return EEXIST;
@@ -79,7 +81,7 @@ int main(int argc, char **argv) {
     self -> name[0] = '.';
 
     struct ext2_dir_entry *parent_pointer = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * (block_num + 1) + 12);
-    parent_pointer -> inode = inode;
+    parent_pointer -> inode = p_inode_index;
     parent_pointer -> rec_len = 1012;
     parent_pointer -> name_len = 2;
     parent_pointer -> file_type = EXT2_FT_DIR;
