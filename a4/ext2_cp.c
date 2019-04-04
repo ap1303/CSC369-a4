@@ -110,10 +110,12 @@ int main(int argc, char **argv) {
         inode_table[inode_num].i_block[i] = block;
         inode_table[inode_num].i_blocks += 2;
         if((max - size) < EXT2_BLOCK_SIZE){
-           memcpy(BLOCK_PTR(block_num), buffer, strlen(buffer));
+           unsigned char *dest = disk + block_num * EXT2_BLOCK_SIZE;
+           memcpy(dest, buffer, strlen(buffer));
            break;
         } else {
-           memcpy(BLOCK_PTR(block_num), buffer, EXT2_BLOCK_SIZE);
+           unsigned char *dest = disk + block_num * EXT2_BLOCK_SIZE;
+           memcpy(dest, buffer, EXT2_BLOCK_SIZE);
            size += EXT2_BLOCK_SIZE;
            buffer = buffer + EXT2_BLOCK_SIZE;
            i++;
