@@ -62,7 +62,7 @@ struct ext2_dir_entry *search_dir(unsigned char *disk, char *substring, struct e
         }
         rec_len_sum += rec_len;
     }
-    
+
     return ent;
 }
 
@@ -130,7 +130,7 @@ int reconfigure_dir(unsigned char *disk, struct ext2_inode parent, int current_b
       }
       rec_len_sum += rec_len;
   }
-  
+
   dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * parent.i_block[0] + rec_len_sum);
   dir -> inode = inode_num;
   dir -> rec_len = EXT2_BLOCK_SIZE - rec_len_sum;
@@ -141,7 +141,7 @@ int reconfigure_dir(unsigned char *disk, struct ext2_inode parent, int current_b
       dir -> file_type = EXT2_FT_REG_FILE;
   }
   strncpy(dir -> name, name, dir -> name_len);
-  return 0; 
+  return 0;
 }
 
 void explore_parent(struct ext2_inode *parent, unsigned char *disk, char *name, int inode, int ft) {
@@ -155,8 +155,8 @@ void explore_parent(struct ext2_inode *parent, unsigned char *disk, char *name, 
             } else {
                 // enough space on the last block
                 // in this case, do nothing
-            } 
-            break;   
+            }
+            break;
         }
     }
 }
@@ -179,4 +179,91 @@ int new_block(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
     sb->s_free_blocks_count--;
 
     return block;
+}
+
+// search within a directory for a file or directory; if successful, return the
+// inode; if not, return -1
+int search_blk(unsigned char *disk, char *substring, int blk, char type) {
+    struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * blk);
+    int rec_len_sum = 0;
+
+    while (rec_len_sum < EXT2_BLOCK_SIZE) {
+        dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * blk + rec_len_sum);
+        unsigned short rec_len = dir -> rec_len;
+        char *name = dir -> name;
+
+        char dir_type;
+        if(dir->file_type == EXT2_FT_REG_FILE){
+			dir_type = 'f';
+		} else if (dir->file_type == EXT2_FT_DIR){
+	        dir_type = 'd';
+		} else if (dir->file_type == EXT2_FT_SYMLINK){
+			dir_type = 'l';
+		} else {
+			dir_type = '0';
+		}
+
+        if (strcmp(name, substring) && (type == dir_type))  {
+            return dir->inode;
+        }
+        rec_len_sum += rec_len;
+    }
+
+    return -1;
+}
+
+int search_in_inode(unsigned char *disk, struct ext2_inode *inode, char type, char *file_name) {
+    int i;
+    int k
+    int dest_node;
+
+    for (i = 0; i < 12; i++) {
+        res = search_blk(disk, file_name, inode->i_block[i], type);
+	    if(res > 0){
+		    return inode.i_block[i];
+	    } else if (inode.i_block[i + 1] == 0){
+			return -1;
+		}
+	}
+
+    int *i_block = (int *)(disk + (inode.i_block)[12] * EXT2_BLOCK_SIZE);
+    for (i = 0; i < 256; i++) {
+        res = search_blk(disk, file_name, i_block[i], type);
+        if (res > 0) {
+            return inode.i_block[i];
+        } else if (i_block[i + 1] == 0){
+			return -1;
+		}
+    }
+
+    int *d_block = (int *)(disk + (inode.i_block)[13] * EXT2_BLOCK_SIZE);
+    for (i = 0; i < 256; i++) {
+        int *i_block = (int *)(disk + (d_block[i]) * EXT2_BLOCK_SIZE);
+        for (k = 0; k < 256; k++) {
+            res = search_blk(disk, file_name, i_block[i], type);
+
+            if (res > 0) {
+                return inode.i_block[k];
+            } else if (i_block[k + 1] == 0) {
+                return -1;
+            }
+        }
+    }
+
+    int *t_block = (int *)(disk + ((inode.i_block)[14] * EXT2_BLOCK_SIZE));
+    for (i = 0; i < 256; i++) {
+        int *d_block = (int *)(disk + (t_block[i]) * EXT2_BLOCK_SIZE);
+            for (k = 0; k < 256; k++) {
+                int *i_block= (int *)(disk + d_block[k] * EXT2_BLOCK_SIZE);
+                res = search_blk(disk, file_name, i_block[i], type);
+
+                if (res > 0) {
+                    return inode.i_block[k];
+                } else if (i_block[k + 1] == 0) {
+                    return -1;
+                }
+            }
+    }
+
+    return -1;
 }

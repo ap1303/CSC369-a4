@@ -84,9 +84,9 @@ int main(int argc, char **argv) {
         }
         int n_inode = new_inode(sb, bg, inode_table, inode_num);
 
-        // modify structure of the parent to create new dir entry for the file 
+        // modify structure of the parent to create new dir entry for the file
         explore_parent(inode_table + (ent -> inode - 1), disk, file_name, n_inode, 1);
-    
+
         // copy file data
         int size = 0;
         int max = strlen(buffer);
@@ -100,12 +100,12 @@ int main(int argc, char **argv) {
         unsigned int block_count = sb->s_blocks_count;
 
         // if the file is containable within the first 12 data blocks
-        while(size < max && i < 12){
+        while (size < max && i < 12) {
             int block_num = allocate_block(disk, bg, block_count);
             if (block_num == 0) {
                 return ENOMEM;
             }
-            
+
             int block = new_block(sb, bg, disk, block_num);
             inode_table[inode_num].i_block[i] = block;
             inode_table[inode_num].i_blocks += 2;
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
                 size += EXT2_BLOCK_SIZE;
                 buffer = buffer + EXT2_BLOCK_SIZE;
                 i++;
-            }      
+            }
         }
 
         // if the file can't be contained within the first 12 data blocks
@@ -143,8 +143,8 @@ int main(int argc, char **argv) {
         //            memcpy(BLOCK_PTR(block), buffer, EXT2_BLOCK_SIZE);
         //            size += EXT2_BLOCK_SIZE;
         //            buffer = buffer + EXT2_BLOCK_SIZE;
-        //        }      
-        //    } 
-        // }       
+        //        }
+        //    }
+        // }
     }
 }
