@@ -30,7 +30,6 @@ int main(int argc, char **argv) {
     struct ext2_inode *rm_parent_inode = malloc(sizeof(struct ext2_inode));
     char rm_name[1024];
     int p_index = 0;
-
     int error = get_last_name(disk, inode_table, root, rm_path, rm_parent_inode, rm_name, &p_index);
     if (error == ENOENT) {
         printf("get_last_name err\n");
@@ -40,11 +39,15 @@ int main(int argc, char **argv) {
 
 
     struct ext2_dir_entry *r_dir = search_dir(disk, rm_name, rm_parent_inode);
+    printf("AAAA\n");
+
     int inode_index = r_dir->inode;
+
     if (inode_index == -1) {
-        printf("File doesn't exist");
+        printf("File doesn't exist\n");
         return ENOENT;
     }
+
 
     struct ext2_inode* rm_inode = &inode_table[inode_index - 1];
     int num_blocks = rm_inode->i_blocks / 2;
@@ -53,8 +56,8 @@ int main(int argc, char **argv) {
     if (d_block < 0) {
         return ENOENT;
     }
-
-    rm_dir(disk, r_dir, rm_inode, rm_name);
+    printf("%i\n", p_index);
+    rm_dir(disk, r_dir, rm_parent_inode, rm_name);
 
     rm_inode->i_links_count--;
     if(rm_inode->i_links_count > 0){

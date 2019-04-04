@@ -354,7 +354,6 @@ int rm_dir(unsigned char *disk, struct ext2_dir_entry* target, struct ext2_inode
         pre_offset = 0;
         target_offset = 0;
         while (target_offset < EXT2_BLOCK_SIZE){
-
             target = (struct ext2_dir_entry *)(disk + (EXT2_BLOCK_SIZE * f_inode->i_block[i]) + target_offset);
             if(target->name_len == len){
                 if(strncmp(target->name, name, target->name_len) == 0){
@@ -376,6 +375,8 @@ int rm_dir(unsigned char *disk, struct ext2_dir_entry* target, struct ext2_inode
                     return 0;
                 }
             }
+            pre_offset = target_offset;
+            target_offset += target->rec_len;
         }
     }
 
