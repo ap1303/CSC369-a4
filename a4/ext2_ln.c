@@ -26,9 +26,9 @@ int main(int argc, char **argv)  {
 
     char *source_path = NULL;
     char *dest_path = NULL;
-    struct ext2_inode *source_parent = NULL;
+    struct ext2_inode *source_parent = malloc(sizeof(struct ext2_inode));
     char source_name[1024];
-    struct ext2_inode *dest_parent = NULL;
+    struct ext2_inode *dest_parent = malloc(sizeof(struct ext2_inode));
     char dest_name[1024];
     int target_ft;
     if (argc == 5) {
@@ -42,9 +42,11 @@ int main(int argc, char **argv)  {
         dest_path = argv[3];
         target_ft = EXT2_FT_REG_FILE;
     }
+    int index = 0;
+    int dest_index = 0;
 
     // decode source path
-    int success = get_last_name(disk, inode_table, inode_table + 1, source_path, source_parent, source_name);
+    int success = get_last_name(disk, inode_table, inode_table + 1, source_path, source_parent, source_name, &index);
     if (success == ENOENT) {
         return ENOENT;
     }
@@ -57,7 +59,7 @@ int main(int argc, char **argv)  {
     } 
 
     // decode destination path
-    int dest_success = get_last_name(disk, inode_table, inode_table + 1, dest_path, dest_parent, dest_name);
+    int dest_success = get_last_name(disk, inode_table, inode_table + 1, dest_path, dest_parent, dest_name, &dest_index);
     if (dest_success == ENOENT) {
         return ENOENT;
     }
@@ -77,10 +79,15 @@ int main(int argc, char **argv)  {
     } else {
         // soft links
         int inode_num = allocate_inode(disk, bg, sb -> s_inodes_count);
-        if (inode == 0) {
+        if (inode_num == 0) {
             return ENOMEM;
         }
         int inode = new_inode(sb, bg, inode_table, inode_num);
+
+        // copy file data
+        int size = 0;
+        int max = strlen(source_path);
+        int i = 0;
 
         // inode pre-setup
         memset(inode_table + inode_num, 0, sizeof(struct ext2_inode));
@@ -99,8 +106,8 @@ int main(int argc, char **argv)  {
         while(size < max && i < 12){
             int block_num = allocate_block(disk, bg, block_count);
             if (block_num == 0) {
-                free(buffer);
-                free(dest_inode);
+                free(source_parent);
+                free(dest_parent);
                 close(fd);
                 return ENOMEM;
             }
@@ -110,11 +117,11 @@ int main(int argc, char **argv)  {
             inode_table[inode_num].i_blocks += 2;
             if((max - size) < EXT2_BLOCK_SIZE){
                unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-               memcpy(dest, buffer + size, strlen(buffer));
+               memcpy(dest, source_name + size, (max - size));
                break;
             } else {
                unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-               memcpy(dest, buffer + size, EXT2_BLOCK_SIZE);
+               memcpy(dest, source_name + size, EXT2_BLOCK_SIZE);
                size += EXT2_BLOCK_SIZE;
                //buffer = buffer + EXT2_BLOCK_SIZE;
                i++;

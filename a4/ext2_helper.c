@@ -184,11 +184,7 @@ int new_block(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
     return block;
 }
 
-int write_file_to_disk() {
 
-}
-
-/*
 // search within a directory for a file or directory; if successful, return the
 // inode; if not, return -1
 int search_blk(unsigned char *disk, char *substring, int blk, char type) {
@@ -220,6 +216,7 @@ int search_blk(unsigned char *disk, char *substring, int blk, char type) {
     return -1;
 }
 
+/*
 int search_in_inode(unsigned char *disk, struct ext2_inode *inode, char type, char *file_name) {
     int i;
     int k
