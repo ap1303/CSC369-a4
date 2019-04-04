@@ -183,7 +183,7 @@ int new_block(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
 
 // search within a directory for a file or directory; if successful, return the
 // inode; if not, return -1
-int search_blk(unsigned char *disk, char *substring, int blk, char type) {
+int search_blk(unsigned char *disk, char *substring, int blk) {
     struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (disk + EXT2_BLOCK_SIZE * blk);
     int rec_len_sum = 0;
 
@@ -192,18 +192,7 @@ int search_blk(unsigned char *disk, char *substring, int blk, char type) {
         unsigned short rec_len = dir -> rec_len;
         char *name = dir -> name;
 
-        char dir_type;
-        if(dir->file_type == EXT2_FT_REG_FILE){
-			dir_type = 'f';
-		} else if (dir->file_type == EXT2_FT_DIR){
-	        dir_type = 'd';
-		} else if (dir->file_type == EXT2_FT_SYMLINK){
-			dir_type = 'l';
-		} else {
-			dir_type = '0';
-		}
-
-        if (strcmp(name, substring) && (type == dir_type))  {
+        if (strcmp(name, substring))  {
             return dir->inode;
         }
         rec_len_sum += rec_len;
@@ -212,53 +201,53 @@ int search_blk(unsigned char *disk, char *substring, int blk, char type) {
     return -1;
 }
 
-int search_in_inode(unsigned char *disk, struct ext2_inode *inode, char type, char *file_name) {
+int search_in_inode(unsigned char *disk, struct ext2_inode *inode, char *file_name) {
     int i;
-    int k
-    int dest_node;
+    int k;
+    int res;
 
     for (i = 0; i < 12; i++) {
-        res = search_blk(disk, file_name, inode->i_block[i], type);
+        res = search_blk(disk, file_name, inode->i_block[i]);
 	    if(res > 0){
-		    return inode.i_block[i];
-	    } else if (inode.i_block[i + 1] == 0){
+		    return inode->i_block[i];
+	    } else if (inode->i_block[i + 1] == 0){
 			return -1;
 		}
 	}
 
-    int *i_block = (int *)(disk + (inode.i_block)[12] * EXT2_BLOCK_SIZE);
+    int *i_block = (int *)(disk + (inode->i_block)[12] * EXT2_BLOCK_SIZE);
     for (i = 0; i < 256; i++) {
-        res = search_blk(disk, file_name, i_block[i], type);
+        res = search_blk(disk, file_name, i_block[i]);
         if (res > 0) {
-            return inode.i_block[i];
+            return inode->i_block[i];
         } else if (i_block[i + 1] == 0){
 			return -1;
 		}
     }
 
-    int *d_block = (int *)(disk + (inode.i_block)[13] * EXT2_BLOCK_SIZE);
+    int *d_block = (int *)(disk + (inode->i_block)[13] * EXT2_BLOCK_SIZE);
     for (i = 0; i < 256; i++) {
         int *i_block = (int *)(disk + (d_block[i]) * EXT2_BLOCK_SIZE);
         for (k = 0; k < 256; k++) {
-            res = search_blk(disk, file_name, i_block[i], type);
+            res = search_blk(disk, file_name, i_block[k]);
 
             if (res > 0) {
-                return inode.i_block[k];
+                return inode->i_block[k];
             } else if (i_block[k + 1] == 0) {
                 return -1;
             }
         }
     }
 
-    int *t_block = (int *)(disk + ((inode.i_block)[14] * EXT2_BLOCK_SIZE));
+    int *t_block = (int *)(disk + ((inode->i_block)[14] * EXT2_BLOCK_SIZE));
     for (i = 0; i < 256; i++) {
         int *d_block = (int *)(disk + (t_block[i]) * EXT2_BLOCK_SIZE);
         for (k = 0; k < 256; k++) {
             int *i_block= (int *)(disk + d_block[k] * EXT2_BLOCK_SIZE);
-            res = search_blk(disk, file_name, i_block[i], type);
+            res = search_blk(disk, file_name, i_block[k]);
 
             if (res > 0) {
-                return inode.i_block[k];
+                return inode->i_block[k];
             } else if (i_block[k + 1] == 0) {
                 return -1;
             }
@@ -266,4 +255,68 @@ int search_in_inode(unsigned char *disk, struct ext2_inode *inode, char type, ch
     }
 
     return -1;
+}
+
+void free_inode_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2_super_block *sb, int idx) {
+    unsigned char *inode_bitmap = disk + bg->bg_inode_bitmap * 1024;
+	int bit_index, byte_index;
+
+	byte_index = (idx - 1)/8;
+    bit_index = (idx - 1)%8;
+    inode_bitmap[byte_index] &= ~(1 << (bit_index));
+
+    sb->s_free_blocks_count += 1;
+	bg->bg_free_blocks_count += 1;;
+}
+
+void free_block_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2_super_block *sb, int block) {
+    unsigned char *block_bitmap = disk + bg->bg_block_bitmap * EXT2_BLOCK_SIZE;
+    int bit_index, byte_index;
+
+	byte_index = (block - 1)/8;
+    bit_index = (block - 1)%8;
+    block_bitmap[byte_index] &= ~(1 << (bit_index));
+
+    sb->s_free_inodes_count += 1;
+	bg->bg_free_inodes_count += 1;
+}
+
+unsigned short calculate_reclen(struct ext2_dir_entry *entry){
+    unsigned short res = 0;
+    res += sizeof(unsigned int);
+    res += sizeof(unsigned short);
+    res += sizeof(unsigned char);
+    res += sizeof(unsigned char);
+    res += entry->name_len;
+    if(res%4 == 0){
+        return res;
+    }else{
+        return 4*(res/4 + 1);
+    }
+}
+
+void rm_dir(unsigned char *disk, int d_block, char *name) {
+    struct ext2_dir_entry* target;
+    struct ext2_dir_entry* previous;
+    int read_count = 0;
+
+    target = (struct ext2_dir_entry *)(disk + EXT2_BLOCK_SIZE * (d_block));
+
+    if(strcmp(target->name, name) == 0 && target->rec_len > EXT2_NAME_LEN + 8){
+        return;
+    }
+    //BREAK NAME NOT EQUALS PROBLEM
+    while(strcmp(target->name, name) != 0){
+        read_count += target->rec_len;
+        previous = target;
+        target = (struct ext2_dir_entry*)(disk + EXT2_BLOCK_SIZE * (d_block) + read_count);
+        target->name[target->name_len] = '\0';
+    }
+
+    previous->rec_len += target->rec_len;
+
+    /* Update next's rec_len is it is not the last entry. */
+    if(read_count + target->rec_len != EXT2_BLOCK_SIZE){
+        target->rec_len = calculate_reclen(target);
+    }
 }
