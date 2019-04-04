@@ -94,8 +94,9 @@ int main(int argc, char **argv) {
 
     // inode pre-setup
     inode_table[inode_num].i_size = max;
-    inode_table[inode_num].i_mode |= EXT2_S_IFREG;
+    inode_table[inode_num].i_mode = EXT2_S_IFREG;
     inode_table[inode_num].i_links_count = 1;
+    inode_table[inode_num].i_blocks = 0;
     memset(inode_table[inode_num].i_block, 0, 15 * sizeof(int));
 
     unsigned int block_count = sb->s_blocks_count;
