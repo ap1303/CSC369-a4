@@ -106,6 +106,7 @@ int main(int argc, char **argv) {
     inode_table[inode_num].i_mode = EXT2_S_IFREG;
     inode_table[inode_num].i_links_count = 1;
     inode_table[inode_num].i_blocks = 0;
+    inode_table[inode_num].i_dtime = 0;
 
     unsigned int block_count = sb->s_blocks_count;
 
@@ -162,6 +163,8 @@ int main(int argc, char **argv) {
             }
             int block = new_block(sb, bg, disk, block_num);
 
+            inode_table[inode_num].i_blocks += 2;
+
             *(indirect_block) = block;
             indirect_block += 1;
 
@@ -171,12 +174,12 @@ int main(int argc, char **argv) {
                 break;
             } else {
                 unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-                memcpy(dest, buffer, EXT2_BLOCK_SIZE);
+                memcpy(dest, buffer + size, EXT2_BLOCK_SIZE);
                 size += EXT2_BLOCK_SIZE;
                 //buffer = buffer + EXT2_BLOCK_SIZE;
             }
         }
-      }
+    }
 
     free(buffer);
     free(dest_inode);

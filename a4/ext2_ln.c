@@ -66,12 +66,32 @@ int main(int argc, char **argv)  {
         return ENOENT;
     }
 
+    struct ext2_inode *parent = inode_table + (dest_ent -> inode - 1);
+
     if (argc == 4) {
         // hard links
-        struct ext2_inode *parent = inode_table + (dest_ent -> inode - 1)
-        explore_parent(parent, disk, source_name, ent -> inode);
+        explore_parent(parent, disk, dest_name, ent -> inode, 1);
 
         struct ext2_inode *source_parent = inode_table + (ent -> inode - 1);
+        source_parent -> i_links_count += 1;
+    } else {
+        // soft links
+        int inode_num = allocate_inode(disk, bg, sb -> s_inodes_count);
+        if (inode == 0) {
+            return ENOMEM;
+        }
+        int inode = new_inode(sb, bg, inode_table, inode_num);
+
+        // inode pre-setup
+        memset(inode_table + inode_num, 0, sizeof(struct ext2_inode));
+        inode_table[inode_num].i_size = max;
+        inode_table[inode_num].i_mode = EXT2_S_IFREG;
+        inode_table[inode_num].i_links_count = 1;
+        inode_table[inode_num].i_blocks = 0;
+        inode_table[inode_num].i_dtime = 0;
+
+        explore_parent(parent, disk, dest_name, inode, 2);
+
 
     }
     

@@ -138,8 +138,10 @@ int reconfigure_dir(unsigned char *disk, struct ext2_inode parent, int current_b
   dir -> name_len = strlen(name);
   if (ftype == 0) {
       dir -> file_type = EXT2_FT_DIR;
-  } else {
+  } else if (ftype == 1){
       dir -> file_type = EXT2_FT_REG_FILE;
+  } else {
+      dir -> file_type = EXT2_FT_SYMLINK;
   }
   strncpy(dir -> name, name, dir -> name_len);
   return 0;
@@ -180,6 +182,10 @@ int new_block(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
     sb->s_free_blocks_count--;
 
     return block;
+}
+
+int write_file_to_disk() {
+
 }
 
 /*
