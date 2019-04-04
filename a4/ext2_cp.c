@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
     if(disk == MAP_FAILED) {
         perror("mmap");
         exit(1);
-}																	
+}
 
     // decode destination path
     struct ext2_super_block *sb = (struct ext2_super_block *)(disk + 1024);
@@ -64,7 +64,7 @@ int main(int argc, char **argv) {
     struct ext2_inode *root = inode_table + (EXT2_ROOT_INO - 1);
     struct ext2_inode *dest_inode = malloc(sizeof(struct ext2_inode));
     char file_name[1024];
-    
+
     int p_index = 0;
     int error = get_last_name(disk, inode_table, root, dest_path, dest_inode, file_name, &p_index);
     if (error == ENOENT) {
@@ -84,9 +84,9 @@ int main(int argc, char **argv) {
     }
     int n_inode = new_inode(sb, bg, inode_table, inode_num);
 
-    // modify structure of the parent to create new dir entry for the file 
+    // modify structure of the parent to create new dir entry for the file
     explore_parent(dest_inode, disk, file_name, n_inode, 1);
-    
+
     // copy file data
     int size = 0;
     int max = strlen(buffer);
@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
         if (block_num == 0) {
             return ENOMEM;
         }
-            
+
         int block = new_block(sb, bg, disk, block_num);
         inode_table[inode_num].i_block[i] = block;
         inode_table[inode_num].i_blocks += 2;
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
            size += EXT2_BLOCK_SIZE;
            buffer = buffer + EXT2_BLOCK_SIZE;
            i++;
-        }      
+        }
     }
 
         // if the file can't be contained within the first 12 data blocks
@@ -156,7 +156,7 @@ int main(int argc, char **argv) {
                 memcpy(dest, buffer, EXT2_BLOCK_SIZE);
                 size += EXT2_BLOCK_SIZE;
                 buffer = buffer + EXT2_BLOCK_SIZE;
-            }      
-        } 
-      }       
+            }
+        }
+      }
 }
