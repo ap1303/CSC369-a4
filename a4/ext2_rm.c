@@ -37,6 +37,8 @@ int main(int argc, char **argv) {
         return ENOENT;
     }
 
+
+
     struct ext2_dir_entry *r_dir = search_dir(disk, rm_name, rm_parent_inode);
     int inode_index = r_dir->inode;
     if (inode_index == -1) {
@@ -52,7 +54,7 @@ int main(int argc, char **argv) {
         return ENOENT;
     }
 
-    rm_dir(disk, d_block, rm_name);
+    rm_dir(disk, r_dir, rm_inode, rm_name);
 
     rm_inode->i_links_count--;
     if(rm_inode->i_links_count > 0){

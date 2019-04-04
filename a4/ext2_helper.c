@@ -281,42 +281,42 @@ void free_block_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2
 	bg->bg_free_inodes_count += 1;
 }
 
-unsigned short calculate_reclen(struct ext2_dir_entry *entry){
-    unsigned short res = 0;
-    res += sizeof(unsigned int);
-    res += sizeof(unsigned short);
-    res += sizeof(unsigned char);
-    res += sizeof(unsigned char);
-    res += entry->name_len;
-    if(res%4 == 0){
-        return res;
-    }else{
-        return 4*(res/4 + 1);
+int rm_dir(unsigned char *disk, struct ext2_dir_entry* target, struct ext2_inode* f_inode, char *name) {
+    int len = strlen(name);
+
+    int target_offset;
+    int pre_offset;
+    for(int i = 0; i < f_inode->i_blocks/2; i ++){
+        pre_offset = 0;
+        target_offset = 0;
+        while (target_offset < EXT2_BLOCK_SIZE){
+
+            target = (struct ext2_dir_entry *)(disk + (EXT2_BLOCK_SIZE * f_inode->i_block[i]) + target_offset);
+            if(target->name_len == len){
+                if(strncmp(target->name, name, target->name_len) == 0){
+                    if(target->inode == 0) { // inode was set to 0 by previous rm
+                        return -1;
+                    }
+                    // found the target we're looking for
+                    struct ext2_dir_entry *pre = (struct ext2_dir_entry *)(disk + (EXT2_BLOCK_SIZE * f_inode->i_block[i]) + pre_offset);
+                    int file_len = target_offset - pre_offset;
+                    if (target->file_type == EXT2_FT_DIR) {
+                        return 0;
+                    }
+
+                    if (file_len == 0) {
+                        target->inode = 0;
+                    }
+
+                    pre->rec_len += file_len;
+                    return 0;
+                }
+            }
+            pre_offset = target_offset;
+            target_offset += target->rec_len;
+        }
     }
-}
 
-void rm_dir(unsigned char *disk, int d_block, char *name) {
-    struct ext2_dir_entry* target;
-    struct ext2_dir_entry* previous;
-    int read_count = 0;
-
-    target = (struct ext2_dir_entry *)(disk + EXT2_BLOCK_SIZE * (d_block));
-
-    if(strcmp(target->name, name) == 0 && target->rec_len > EXT2_NAME_LEN + 8){
-        return;
-    }
-    //BREAK NAME NOT EQUALS PROBLEM
-    while(strcmp(target->name, name) != 0){
-        read_count += target->rec_len;
-        previous = target;
-        target = (struct ext2_dir_entry*)(disk + EXT2_BLOCK_SIZE * (d_block) + read_count);
-        target->name[target->name_len] = '\0';
-    }
-
-    previous->rec_len += target->rec_len;
-
-    /* Update next's rec_len is it is not the last entry. */
-    if(read_count + target->rec_len != EXT2_BLOCK_SIZE){
-        target->rec_len = calculate_reclen(target);
-    }
+    // file wasn't found
+    return -1;
 }
