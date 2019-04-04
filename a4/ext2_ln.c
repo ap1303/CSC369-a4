@@ -64,17 +64,17 @@ int main(int argc, char **argv)  {
         return ENOENT;
     }
     struct ext2_dir_entry *dest_ent = search_dir(disk, dest_name, dest_parent);
-    if (ent == NULL) {
-        return ENOENT;
+    if (dest_ent != NULL) {
+        return EEXIST;
     }
 
-    struct ext2_inode *parent = inode_table + (dest_ent -> inode - 1);
+    struct ext2_inode *parent = inode_table + (dest_index - 1);
 
     if (argc == 4) {
         // hard links
         explore_parent(parent, disk, dest_name, ent -> inode, 1);
 
-        struct ext2_inode *source_parent = inode_table + (ent -> inode - 1);
+        struct ext2_inode *source_parent = inode_table + (index - 1);
         source_parent -> i_links_count += 1;
     } else {
         // soft links
