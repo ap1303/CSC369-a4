@@ -90,9 +90,36 @@ int main(int argc, char **argv)  {
         inode_table[inode_num].i_blocks = 0;
         inode_table[inode_num].i_dtime = 0;
 
+        // append to parent 
         explore_parent(parent, disk, dest_name, inode, 2);
 
+        unsigned int block_count = sb->s_blocks_count;
 
+        // if the file is containable within the first 12 data blocks
+        while(size < max && i < 12){
+            int block_num = allocate_block(disk, bg, block_count);
+            if (block_num == 0) {
+                free(buffer);
+                free(dest_inode);
+                close(fd);
+                return ENOMEM;
+            }
+
+            int block = new_block(sb, bg, disk, block_num);
+            inode_table[inode_num].i_block[i] = block;
+            inode_table[inode_num].i_blocks += 2;
+            if((max - size) < EXT2_BLOCK_SIZE){
+               unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
+               memcpy(dest, buffer + size, strlen(buffer));
+               break;
+            } else {
+               unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
+               memcpy(dest, buffer + size, EXT2_BLOCK_SIZE);
+               size += EXT2_BLOCK_SIZE;
+               //buffer = buffer + EXT2_BLOCK_SIZE;
+               i++;
+            }
+        }
     }
     
 }
