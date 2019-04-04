@@ -30,8 +30,7 @@ int main(int argc, char **argv) {
     char *buffer = NULL;
     FILE *file = fopen(source_path, "r");
     if(file == NULL){
-        perror("fopen: ");
-        exit(-1);
+        return ENOENT;
     } else {
         fseek(file, 0, SEEK_END);
         int length = ftell(file);
@@ -46,15 +45,15 @@ int main(int argc, char **argv) {
     // read in the disk
     int fd = open(argv[1], O_RDWR);
 	if(fd == -1) {
-		perror("open");
-		exit(1);
+		free(buffer);
+        return ENOENT;
     }
 
     unsigned char * disk = mmap(NULL, 128 * 1024, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if(disk == MAP_FAILED) {
-        perror("mmap");
+        //perror("mmap");
         exit(1);
-}
+    }
 
     // decode destination path
     struct ext2_super_block *sb = (struct ext2_super_block *)(disk + 1024);
@@ -68,11 +67,17 @@ int main(int argc, char **argv) {
     int p_index = 0;
     int error = get_last_name(disk, inode_table, root, dest_path, dest_inode, file_name, &p_index);
     if (error == ENOENT) {
-        printf("get_last_name err\n");
+        //printf("get_last_name err\n");
+        free(buffer);
+        free(dest_inode);
+        close(fd);
         return ENOENT;
     }
     struct ext2_dir_entry *ent = search_dir(disk, file_name, dest_inode);
     if (ent != NULL) {
+        free(buffer);
+        free(dest_inode);
+        close(fd);
         return EEXIST;
     }
 
@@ -80,6 +85,9 @@ int main(int argc, char **argv) {
     unsigned int inodes_count = sb->s_inodes_count;
     int inode_num = allocate_inode(disk, bg, inodes_count);
     if (inode_num == 0) {
+        free(buffer);
+        free(dest_inode);
+        close(fd);
         return ENOMEM;
     }
     int n_inode = new_inode(sb, bg, inode_table, inode_num);
@@ -93,11 +101,11 @@ int main(int argc, char **argv) {
     int i = 0;
 
     // inode pre-setup
+    memset(inode_table + inode_num, 0, sizeof(struct ext2_inode));
     inode_table[inode_num].i_size = max;
     inode_table[inode_num].i_mode = EXT2_S_IFREG;
     inode_table[inode_num].i_links_count = 1;
     inode_table[inode_num].i_blocks = 0;
-    memset(inode_table[inode_num].i_block, 0, 15 * sizeof(int));
 
     unsigned int block_count = sb->s_blocks_count;
 
@@ -105,6 +113,9 @@ int main(int argc, char **argv) {
     while(size < max && i < 12){
         int block_num = allocate_block(disk, bg, block_count);
         if (block_num == 0) {
+            free(buffer);
+            free(dest_inode);
+            close(fd);
             return ENOMEM;
         }
 
@@ -113,13 +124,13 @@ int main(int argc, char **argv) {
         inode_table[inode_num].i_blocks += 2;
         if((max - size) < EXT2_BLOCK_SIZE){
            unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-           memcpy(dest, buffer, strlen(buffer));
+           memcpy(dest, buffer + size, strlen(buffer));
            break;
         } else {
            unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-           memcpy(dest, buffer, EXT2_BLOCK_SIZE);
+           memcpy(dest, buffer + size, EXT2_BLOCK_SIZE);
            size += EXT2_BLOCK_SIZE;
-           buffer = buffer + EXT2_BLOCK_SIZE;
+           //buffer = buffer + EXT2_BLOCK_SIZE;
            i++;
         }
     }
@@ -129,6 +140,9 @@ int main(int argc, char **argv) {
     if (i == 12 && size < max) {
         int block_num = allocate_block(disk, bg, block_count);
         if (block_num == 0) {
+            free(buffer);
+            free(dest_inode);
+            close(fd);
             return ENOMEM;
         }
         int block = new_block(sb, bg, disk, block_num);
@@ -141,6 +155,9 @@ int main(int argc, char **argv) {
         for(int i = 0; i < EXT2_BLOCK_SIZE / 4; i++) {
             int block_num = allocate_block(disk, bg, block_count);
             if (block_num == 0) {
+                free(buffer);
+                free(dest_inode);
+                close(fd);
                 return ENOMEM;
             }
             int block = new_block(sb, bg, disk, block_num);
@@ -150,14 +167,19 @@ int main(int argc, char **argv) {
 
             if((max - size) < EXT2_BLOCK_SIZE){
                 unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
-                memcpy(dest, buffer, strlen(buffer));
+                memcpy(dest, buffer + size, strlen(buffer));
                 break;
             } else {
                 unsigned char *dest = disk + block * EXT2_BLOCK_SIZE;
                 memcpy(dest, buffer, EXT2_BLOCK_SIZE);
                 size += EXT2_BLOCK_SIZE;
-                buffer = buffer + EXT2_BLOCK_SIZE;
+                //buffer = buffer + EXT2_BLOCK_SIZE;
             }
         }
       }
+
+    free(buffer);
+    free(dest_inode);
+    close(fd);
+    return 0;
 }
