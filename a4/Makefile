@@ -1,4 +1,4 @@
-all: cp mkdir ln rm
+all: cp mkdir ln rm checker
 
 cp: ext2_cp.c ext2_helper.c
 		gcc -Wall -g -o ext2_cp ext2_cp.c

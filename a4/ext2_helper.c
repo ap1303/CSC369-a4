@@ -205,6 +205,8 @@ int search_blk(unsigned char *disk, char *substring, int blk) {
     return -1;
 }
 
+// write buffer to inode_table[inode_num]
+// used in cp and ln
 int write_to_data_blocks(char *buffer, int inode_num, unsigned int block_count, struct ext2_inode *dest_inode, int fd, struct ext2_super_block *sb, struct ext2_group_desc *bg, struct ext2_inode *inode_table, unsigned char *disk) {
     // copy file data
     int size = 0;
@@ -245,8 +247,8 @@ int write_to_data_blocks(char *buffer, int inode_num, unsigned int block_count, 
         }
     }
 
-        // if the file can't be contained within the first 12 data blocks
-        // in this case, add one level of indirection
+    // if the file can't be contained within the first 12 data blocks
+    // in this case, add one level of indirection
     if (i == 12 && size < max) {
         int block_num = allocate_block(disk, bg, block_count);
         if (block_num == 0) {
