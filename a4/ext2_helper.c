@@ -608,6 +608,7 @@ int fix_block_count(unsigned char *disk, unsigned int block_count, struct ext2_s
 int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned char *bitmap, int num, int inode, int *total) {
     int i = num / 8;
     int j = num - (8 * i);
+    int previous = j;
     unsigned char e;
     if (j != 0) {
         j -= 1;
@@ -617,7 +618,7 @@ int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsign
         e = bitmap[i - 1];
     }
     if ((e & (1 << j)) == 0) {
-        if (j != 0) {
+        if (previous != 0) {
             bitmap[i] |= (1 << j);
         } else {
             bitmap[i - 1] |= 0x80;
