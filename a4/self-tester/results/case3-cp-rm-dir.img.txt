@@ -14,34 +14,29 @@ Blockgroup
 Inode bitmap: 11111111111111101010000000000000
 Block bitmap: 1111111111111111111111111101010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 
-Used blocks (Block NUMBER): 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 28 30 
-Used inodes (Inode NUMBER): 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 17 19 
-
 == FILESYSTEM TREE ==
-[ 2] '.' EXT2_FT_DIR; rec length: 12 
-[ 2] '..' EXT2_FT_DIR; rec length: 12 
-[11] 'lost+found' EXT2_FT_DIR; rec length: 36 
-    [11] '.' EXT2_FT_DIR; rec length: 12 
-    [ 2] '..' EXT2_FT_DIR; rec length: 1012 
-[13] 'level1' EXT2_FT_DIR; rec length: 16 
-    [13] '.' EXT2_FT_DIR; rec length: 12 
-    [ 2] '..' EXT2_FT_DIR; rec length: 12 
-    [17] 'd.txt' EXT2_FT_REG_FILE; rec length: 32 
-    [19] 'f.txt' EXT2_FT_REG_FILE; rec length: 16 
-    [12] 'file' EXT2_FT_REG_FILE; rec length: 952 
-[14] 'b.txt' EXT2_FT_REG_FILE; rec length: 16 
-[15] 'folder2' EXT2_FT_DIR; rec length: 932 
-    [15] '.' EXT2_FT_DIR; rec length: 12 
-    [ 2] '..' EXT2_FT_DIR; rec length: 1012 
+[ 2] '.' EXT2_FT_DIR
+[ 2] '..' EXT2_FT_DIR
+[11] 'lost+found' EXT2_FT_DIR
+    [11] '.' EXT2_FT_DIR
+    [ 2] '..' EXT2_FT_DIR
+[13] 'level1' EXT2_FT_DIR
+    [13] '.' EXT2_FT_DIR
+    [ 2] '..' EXT2_FT_DIR
+    [17] 'd.txt' EXT2_FT_REG_FILE
+    [19] 'f.txt' EXT2_FT_REG_FILE
+    [12] 'file' EXT2_FT_REG_FILE
+[14] 'b.txt' EXT2_FT_REG_FILE
+[15] 'folder2' EXT2_FT_DIR
+    [15] '.' EXT2_FT_DIR
+    [ 2] '..' EXT2_FT_DIR
 
 == INODE DUMP ==
-INODE 2: {size:1024, links:5, blocks:2, dtime: 0}
-  Inode References (Index->Block Number): 0->9 
+INODE 2: {size:1024, links:5, blocks:2}
   TYPE: EXT2_S_IFDIR
-INODE 11: {size:12288, links:2, blocks:24, dtime: 0}
+INODE 11: {size:12288, links:2, blocks:24}
   TYPE: EXT2_S_IFDIR
-INODE 12: {size:1024, links:1, blocks:2, dtime: 0}
-  Inode References (Index->Block Number): 0->23 
+INODE 12: {size:1024, links:1, blocks:2}
   TYPE: EXT2_S_IFREG
   > 00000000: 4f 4e 45 42 4c 4f 43 4b 4f 4e 45 42 4c 4f 43 4b ONEBLOCKONEBLOCK
   > 00000010: 4f 4e 45 42 4c 4f 43 4b 4f 4e 45 42 4c 4f 43 4b ONEBLOCKONEBLOCK
@@ -107,11 +102,9 @@ INODE 12: {size:1024, links:1, blocks:2, dtime: 0}
   > 000003d0: 4f 4e 45 42 4c 4f 43 4b 4f 4e 45 42 4c 4f 43 4b ONEBLOCKONEBLOCK
   > 000003e0: 4f 4e 45 42 4c 4f 43 4b 4f 4e 45 42 4c 4f 43 4b ONEBLOCKONEBLOCK
   > 000003f0: 4f 4e 45 42 4c 4f 43 4b 4f 4e 45 42 4c 4f 43 4b ONEBLOCKONEBLOCK
-INODE 13: {size:1024, links:2, blocks:2, dtime: 0}
-  Inode References (Index->Block Number): 0->24 
+INODE 13: {size:1024, links:2, blocks:2}
   TYPE: EXT2_S_IFDIR
-INODE 14: {size:1024, links:1, blocks:2, dtime: 0}
-  Inode References (Index->Block Number): 0->25 
+INODE 14: {size:1024, links:1, blocks:2}
   TYPE: EXT2_S_IFREG
   > 00000000: 44 45 46 42 4c 4f 43 4b 44 45 46 42 4c 4f 43 4b DEFBLOCKDEFBLOCK
   > 00000010: 44 45 46 42 4c 4f 43 4b 44 45 46 42 4c 4f 43 4b DEFBLOCKDEFBLOCK
@@ -177,11 +170,9 @@ INODE 14: {size:1024, links:1, blocks:2, dtime: 0}
   > 000003d0: 44 45 46 42 4c 4f 43 4b 44 45 46 42 4c 4f 43 4b DEFBLOCKDEFBLOCK
   > 000003e0: 44 45 46 42 4c 4f 43 4b 44 45 46 42 4c 4f 43 4b DEFBLOCKDEFBLOCK
   > 000003f0: 44 45 46 42 4c 4f 43 4b 44 45 46 42 4c 4f 43 4b DEFBLOCKDEFBLOCK
-INODE 15: {size:1024, links:2, blocks:2, dtime: 0}
-  Inode References (Index->Block Number): 0->26 
+INODE 15: {size:1024, links:2, blocks:2}
   TYPE: EXT2_S_IFDIR
-INODE 17: {size:1024, links:1, blocks:2, dtime: 0}
-  Inode References (Index->Block Number): 0->28 
+INODE 17: {size:1024, links:1, blocks:2}
   TYPE: EXT2_S_IFREG
   > 00000000: 4a 4b 4c 42 4c 4f 43 4b 4a 4b 4c 42 4c 4f 43 4b JKLBLOCKJKLBLOCK
   > 00000010: 4a 4b 4c 42 4c 4f 43 4b 4a 4b 4c 42 4c 4f 43 4b JKLBLOCKJKLBLOCK
@@ -247,8 +238,7 @@ INODE 17: {size:1024, links:1, blocks:2, dtime: 0}
   > 000003d0: 4a 4b 4c 42 4c 4f 43 4b 4a 4b 4c 42 4c 4f 43 4b JKLBLOCKJKLBLOCK
   > 000003e0: 4a 4b 4c 42 4c 4f 43 4b 4a 4b 4c 42 4c 4f 43 4b JKLBLOCKJKLBLOCK
   > 000003f0: 4a 4b 4c 42 4c 4f 43 4b 4a 4b 4c 42 4c 4f 43 4b JKLBLOCKJKLBLOCK
-INODE 19: {size:1024, links:1, blocks:2, dtime: 0}
-  Inode References (Index->Block Number): 0->30 
+INODE 19: {size:1024, links:1, blocks:2}
   TYPE: EXT2_S_IFREG
   > 00000000: 50 51 52 42 4c 4f 43 4b 50 51 52 42 4c 4f 43 4b PQRBLOCKPQRBLOCK
   > 00000010: 50 51 52 42 4c 4f 43 4b 50 51 52 42 4c 4f 43 4b PQRBLOCKPQRBLOCK
