@@ -614,7 +614,7 @@ int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsign
         if (inode == 1) {
             sb -> s_free_inodes_count += 1;
             bg -> bg_free_inodes_count += 1;
-            printf("Fixed: inode [%d] not marked as in-use\n", num + 1);
+            printf("Fixed: inode [%d] not marked as in-use\n", num);
             *total += 1; 
         } else {
             sb -> s_free_blocks_count += 1;
@@ -636,7 +636,7 @@ void fix_file(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
         } else {
             dir -> file_type = EXT2_FT_SYMLINK;
         }
-        printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num + 1);
+        printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num);
         *total += 1;
     }
 
@@ -746,12 +746,12 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
                     break;
                 }
                 if (sub -> file_type == EXT2_FT_REG_FILE) {
-                   fix_file(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((sub -> inode) - 1), sub -> inode, total);
+                   fix_file(sb, bg, inode_bitmap, block_bitmap, sub, inode_table + ((sub -> inode) - 1), sub -> inode, total);
                 } else if (sub -> file_type == EXT2_FT_SYMLINK) {
-                   fix_symlink_files(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((sub -> inode) - 1), sub -> inode, total);
+                   fix_symlink_files(sb, bg, inode_bitmap, block_bitmap, sub, inode_table + ((sub -> inode) - 1), sub -> inode, total);
                 } else {
                    if (strcmp(sub -> name, ".") != 0 && strcmp(sub -> name, "..") != 0) {
-                       fix_dir_files(disk, sb, bg, inode_bitmap, block_bitmap, inode_table, dir, inode_table + ((sub -> inode) - 1), sub -> inode, total);
+                       fix_dir_files(disk, sb, bg, inode_bitmap, block_bitmap, inode_table, sub, inode_table + ((sub -> inode) - 1), sub -> inode, total);
                    } 
                 }
                 rec_len_sum += sub -> rec_len;
