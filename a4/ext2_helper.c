@@ -616,7 +616,6 @@ int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsign
         j = 7;
         e = bitmap[i - 1];
     }
-    unsigned char e = bitmap[i];
     if ((e & (1 << j)) == 0) {
         bitmap[i] |= (1 << j);
         if (inode == 1) {
