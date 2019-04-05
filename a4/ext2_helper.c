@@ -493,7 +493,8 @@ int check_valid_restore(struct ext2_dir_entry *target, struct ext2_inode *inode_
     return 0;
 }
 
-int restore_dir(unsigned char *disk, struct ext2_dir_entry *pre, struct ext2_dir_entry *target, int gap, struct ext2_inode *restore_inode) {
+int restore_entry(struct ext2_dir_entry *pre, struct ext2_dir_entry *target, int gap, struct ext2_inode *inode_table) {
+    struct ext2_inode *restore_inode = inode_table + target->inode - 1;
     target->rec_len = pre->rec_len - gap;
     pre->rec_len = gap;
 
@@ -627,7 +628,7 @@ int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsign
             sb -> s_free_inodes_count -= 1;
             bg -> bg_free_inodes_count -= 1;
             printf("Fixed: inode [%d] not marked as in-use\n", num);
-            *total += 1; 
+            *total += 1;
         } else {
             sb -> s_free_blocks_count -= 1;
             bg -> bg_free_blocks_count -= 1;
@@ -671,7 +672,7 @@ void fix_file(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
         } else {
             break;
         }
-    } 
+    }
     printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num);
     *total += count;
 }
@@ -704,7 +705,7 @@ void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, 
                 count += 1;
             }
         }
-    } 
+    }
     printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num);
     *total += count;
 }
@@ -714,11 +715,11 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
         if ((inode -> i_mode & EXT2_S_IFREG) == EXT2_S_IFREG) {
             if (dir != NULL) {
                 dir -> file_type = EXT2_FT_REG_FILE;
-            } 
+            }
         } else {
             if (dir != NULL) {
                 dir -> file_type = EXT2_FT_SYMLINK;
-            }     
+            }
         }
         printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num);
         *total += 1;
@@ -742,8 +743,8 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
             }
         } else {
             break;
-        }  
-    } 
+        }
+    }
     printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num);
     *total += count;
 
@@ -764,13 +765,13 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
                 } else {
                    if (strcmp(sub -> name, ".") != 0 && strcmp(sub -> name, "..") != 0) {
                        fix_dir_files(disk, sb, bg, inode_bitmap, block_bitmap, inode_table, sub, inode_table + ((sub -> inode) - 1), sub -> inode, total);
-                   } 
+                   }
                 }
                 rec_len_sum += sub -> rec_len;
             }
             if (rec_len_sum == 0) {
                 break;
-            }   
+            }
         } else {
             break;
         }
