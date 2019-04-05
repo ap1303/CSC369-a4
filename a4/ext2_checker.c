@@ -194,12 +194,12 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
                     break;
                 }
                 if (sub -> file_type == EXT2_FT_REG_FILE) {
-                   fix_file(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), total);
+                   fix_file(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((sub -> inode) - 1), sub -> inode, total);
                 } else if (sub -> file_type == EXT2_FT_SYMLINK) {
-                   fix_symlink_files(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((sub -> inode) - 1), ((sub -> inode) - 1), total);
+                   fix_symlink_files(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((sub -> inode) - 1), sub -> inode, total);
                 } else {
                    if (strcmp(sub -> name, ".") != 0 && strcmp(sub -> name, "..") != 0) {
-                       fix_dir_files(disk, sb, bg, inode_bitmap, block_bitmap, inode_table, dir, inode_table + ((sub -> inode) - 1), ((sub -> inode) - 1), total);
+                       fix_dir_files(disk, sb, bg, inode_bitmap, block_bitmap, inode_table, dir, inode_table + ((sub -> inode) - 1), sub -> inode, total);
                    } 
                 }
                 rec_len_sum += sub -> rec_len;
@@ -252,12 +252,12 @@ int main(int argc, char **argv) {
             while (rec_len_sum < EXT2_BLOCK_SIZE) {
                struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (BLOCK_PTR(block) + rec_len_sum);
                if (dir -> file_type == EXT2_FT_REG_FILE) {
-                   fix_file(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), &total_fixes);
+                   fix_file(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((dir -> inode) - 1), dir -> inode, &total_fixes);
                } else if (dir -> file_type == EXT2_FT_SYMLINK) {
-                   fix_symlink_files(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), &total_fixes);
+                   fix_symlink_files(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((dir -> inode) - 1), dir -> inode, &total_fixes);
                } else {
                    if (strcmp(dir -> name, ".") != 0 && strcmp(dir -> name, "..") != 0) {
-                       fix_dir_files(disk, sb, bg, inode_bitmap, block_bitmap, inode_table, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), &total_fixes);
+                       fix_dir_files(disk, sb, bg, inode_bitmap, block_bitmap, inode_table, dir, inode_table + ((dir -> inode) - 1), dir -> inode, &total_fixes);
                    } 
                }
                rec_len_sum += dir -> rec_len;
