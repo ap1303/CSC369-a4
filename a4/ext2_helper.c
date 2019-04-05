@@ -205,6 +205,8 @@ int search_blk(unsigned char *disk, char *substring, int blk) {
     return -1;
 }
 
+// write buffer to inode_table[inode_num]
+// used in cp and ln
 int write_to_data_blocks(char *buffer, int inode_num, unsigned int block_count, struct ext2_inode *dest_inode, int fd, struct ext2_super_block *sb, struct ext2_group_desc *bg, struct ext2_inode *inode_table, unsigned char *disk) {
     // copy file data
     int size = 0;
@@ -245,8 +247,8 @@ int write_to_data_blocks(char *buffer, int inode_num, unsigned int block_count, 
         }
     }
 
-        // if the file can't be contained within the first 12 data blocks
-        // in this case, add one level of indirection
+    // if the file can't be contained within the first 12 data blocks
+    // in this case, add one level of indirection
     if (i == 12 && size < max) {
         int block_num = allocate_block(disk, bg, block_count);
         if (block_num == 0) {
@@ -300,19 +302,21 @@ int search_in_inode(unsigned char *disk, struct ext2_inode *inode, char *file_na
 
 
     for (i = 0; i < 12; i++) {
-        res = search_blk(disk, file_name, inode->i_block[i]);
+        int block = inode->i_block[i];
+        res = search_blk(disk, file_name, block);
 	    if(res > 0){
 		    return inode->i_block[i];
 	    } else if (inode->i_block[i + 1] == 0){
 			return -1;
 		}
+        
 	}
 
     int *i_block = (int *)(disk + (inode->i_block)[12] * EXT2_BLOCK_SIZE);
     for (i = 0; i < 256; i++) {
         res = search_blk(disk, file_name, i_block[i]);
         if (res > 0) {
-            return inode->i_block[i];
+            return i_block[i];
         } else if (i_block[i + 1] == 0){
 			return -1;
 		}
@@ -329,8 +333,8 @@ void free_inode_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2
     bit_index = (idx - 1) % 8;
     inode_bitmap[byte_index] &= ~(1 << (bit_index));
 
-    sb->s_free_blocks_count += 1;
-	bg->bg_free_blocks_count += 1;;
+    sb->s_free_inodes_count += 1;
+	bg->bg_free_inodes_count += 1;
 }
 
 void free_block_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2_super_block *sb, int block) {
@@ -341,14 +345,14 @@ void free_block_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2
     bit_index = (block - 1) % 8;
     block_bitmap[byte_index] &= ~(1 << (bit_index));
 
-    sb->s_free_inodes_count += 1;
-	bg->bg_free_inodes_count += 1;
+    sb->s_free_blocks_count += 1;
+	bg->bg_free_blocks_count += 1;
 }
 
 int rm_dir(unsigned char *disk, struct ext2_dir_entry* target, struct ext2_inode* f_inode, char *name) {
     int target_offset;
     int pre_offset;
-    for(int i = 0; i < f_inode->i_blocks/2; i ++){
+    for(int i = 0; i < f_inode -> i_blocks / 2; i++){
         pre_offset = 0;
         target_offset = 0;
         while (target_offset < EXT2_BLOCK_SIZE){
