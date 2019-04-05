@@ -21,14 +21,14 @@ int fix_inode_count(unsigned char *disk, unsigned int inodes_count, struct ext2_
     if (sb -> s_free_inodes_count != free_inodes) {
         int delta = sb -> s_free_inodes_count - free_inodes;
         sb -> s_free_inodes_count = free_inodes;
-        printf("superblock's free inode counter was off by %d compared to bitmap\n", delta);
+        printf("superblock's free inode counter was off by %d compared to bitmap\n", abs(delta));
         *total_fixes += 1;
     }
 
     if (bg -> bg_free_inodes_count != free_inodes) {
         int delta = bg -> bg_free_inodes_count - free_inodes;
         bg -> bg_free_inodes_count = free_inodes;
-        printf("block group's free inode counter was off by %d compared to bitmap\n", delta);
+        printf("block group's free inode counter was off by %d compared to bitmap\n", abs(delta));
         *total_fixes += 1;
     }
     return 0;
@@ -53,14 +53,14 @@ int fix_block_count(unsigned char *disk, unsigned int block_count, struct ext2_s
     if (sb -> s_free_blocks_count != free_blocks) {
         int delta = sb -> s_free_blocks_count - free_blocks;
         sb -> s_free_blocks_count = free_blocks;
-        printf("superblock's free blocks counter was off by %d compared to bitmap\n", delta);
+        printf("superblock's free blocks counter was off by %d compared to bitmap\n", abs(delta));
         *total_fixes += 1;
     }
 
     if (bg -> bg_free_inodes_count != free_blocks) {
         int delta = bg -> bg_free_blocks_count - free_blocks;
         bg -> bg_free_blocks_count = free_blocks;
-        printf("block group's free blocks counter was off by %d compared to bitmap\n", delta);
+        printf("block group's free blocks counter was off by %d compared to bitmap\n", abs(delta));
         *total_fixes += 1;
     }
     return 0;
@@ -195,7 +195,9 @@ void fix_dir_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsi
                 } else if (sub -> file_type == EXT2_FT_SYMLINK) {
                    fix_symlink_files(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), total);
                 } else {
-                   fix_dir_files(sb, bg, inode_bitmap, block_bitmap, inode_table, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), total);
+                   if (strcmp(sub -> name, ".") != 0 && strcmp(sub -> name, "..") != 0) {
+                       fix_dir_files(sb, bg, inode_bitmap, block_bitmap, inode_table, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), total);
+                   } 
                }
             }
             
@@ -229,9 +231,9 @@ int main(int argc, char **argv) {
 
     struct ext2_super_block *sb = (struct ext2_super_block *)(disk + 1024);
     struct ext2_group_desc *bg = (struct ext2_group_desc *) (disk + 2048);
-    struct ext2_inode *inode_table = (struct ext2_inode *) (disk + 1024 * bg->bg_inode_table);
-    unsigned char *inode_bitmap = disk + bg -> bg_inode_bitmap * EXT2_BLOCK_SIZE;
+    struct ext2_inode *inode_table = (struct ext2_inode *) (disk + bg -> bg_inode_bitmap * EXT2_BLOCK_SIZE);
     unsigned char *block_bitmap = disk + bg -> bg_block_bitmap * EXT2_BLOCK_SIZE;
+    unsigned char *inode_bitmap = disk + bg -> bg_inode_bitmap * EXT2_BLOCK_SIZE;
 
 
     fix_block_count(disk, sb -> s_blocks_count, sb, bg, &total_fixes);
@@ -249,7 +251,9 @@ int main(int argc, char **argv) {
                } else if (dir -> file_type == EXT2_FT_SYMLINK) {
                    fix_symlink_files(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), &total_fixes);
                } else {
-                   fix_dir_files(sb, bg, inode_bitmap, block_bitmap, inode_table, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), &total_fixes);
+                   if (strcmp(dir -> name, ".") != 0 && strcmp(dir -> name, "..") != 0) {
+                       fix_dir_files(sb, bg, inode_bitmap, block_bitmap, inode_table, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), &total_fixes);
+                   } 
                }
                rec_len_sum += dir -> rec_len;
             } 
