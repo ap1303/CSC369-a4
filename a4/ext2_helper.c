@@ -607,18 +607,26 @@ int fix_block_count(unsigned char *disk, unsigned int block_count, struct ext2_s
 
 int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned char *bitmap, int num, int inode, int *total) {
     int i = num / 8;
-    int j = num - (8 * i) - 1;
+    int j = num - (8 * i);
+    unsigned char e;
+    if (j != 0) {
+        j -= 1;
+        e = bitmap[i];
+    } else {
+        j = 7;
+        e = bitmap[i - 1];
+    }
     unsigned char e = bitmap[i];
     if ((e & (1 << j)) == 0) {
         bitmap[i] |= (1 << j);
         if (inode == 1) {
-            sb -> s_free_inodes_count += 1;
-            bg -> bg_free_inodes_count += 1;
+            sb -> s_free_inodes_count -= 1;
+            bg -> bg_free_inodes_count -= 1;
             printf("Fixed: inode [%d] not marked as in-use\n", num);
             *total += 1; 
         } else {
-            sb -> s_free_blocks_count += 1;
-            bg -> bg_free_blocks_count += 1;
+            sb -> s_free_blocks_count -= 1;
+            bg -> bg_free_blocks_count -= 1;
             *total += 1;
         }
         return 1;
