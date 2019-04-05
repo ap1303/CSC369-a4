@@ -325,8 +325,8 @@ void free_inode_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2
     unsigned char *inode_bitmap = disk + bg->bg_inode_bitmap * 1024;
 	int bit_index, byte_index;
 
-	byte_index = (idx - 1)/8;
-    bit_index = (idx - 1)%8;
+	byte_index = (idx - 1) / 8;
+    bit_index = (idx - 1) % 8;
     inode_bitmap[byte_index] &= ~(1 << (bit_index));
 
     sb->s_free_blocks_count += 1;
@@ -337,8 +337,8 @@ void free_block_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2
     unsigned char *block_bitmap = disk + bg->bg_block_bitmap * EXT2_BLOCK_SIZE;
     int bit_index, byte_index;
 
-	byte_index = (block - 1)/8;
-    bit_index = (block - 1)%8;
+	byte_index = (block - 1) / 8;
+    bit_index = (block - 1) % 8;
     block_bitmap[byte_index] &= ~(1 << (bit_index));
 
     sb->s_free_inodes_count += 1;
@@ -346,7 +346,6 @@ void free_block_map(unsigned char *disk, struct ext2_group_desc *bg, struct ext2
 }
 
 int rm_dir(unsigned char *disk, struct ext2_dir_entry* target, struct ext2_inode* f_inode, char *name) {
-    int len = strlen(name);
     int target_offset;
     int pre_offset;
     for(int i = 0; i < f_inode->i_blocks/2; i ++){
@@ -354,25 +353,23 @@ int rm_dir(unsigned char *disk, struct ext2_dir_entry* target, struct ext2_inode
         target_offset = 0;
         while (target_offset < EXT2_BLOCK_SIZE){
             target = (struct ext2_dir_entry *)(disk + (EXT2_BLOCK_SIZE * f_inode->i_block[i]) + target_offset);
-            if(target->name_len == len){
-                if(strncmp(target->name, name, target->name_len) == 0){
-                    if(target->inode == 0) { // inode was set to 0 by previous rm
-                        return -1;
-                    }
-                    // found the target we're looking for
-                    struct ext2_dir_entry *pre = (struct ext2_dir_entry *)(disk + (EXT2_BLOCK_SIZE * f_inode->i_block[i]) + pre_offset);
-                    int file_len = target_offset - pre_offset;
-                    if (target->file_type == EXT2_FT_DIR) {
-                        return 0;
-                    }
-
-                    if (file_len == 0) {
-                        target->inode = 0;
-                    }
-
-                    pre->rec_len += target->rec_len;
+            if(strcmp(target->name, name) == 0){
+                if(target->inode == 0) { // inode was set to 0 by previous rm
+                    return -1;
+                }
+                // found the target we're looking for
+                struct ext2_dir_entry *pre = (struct ext2_dir_entry *)(disk + (EXT2_BLOCK_SIZE * f_inode->i_block[i]) + pre_offset);
+                int file_len = target_offset - pre_offset;
+                if (target->file_type == EXT2_FT_DIR) {
                     return 0;
                 }
+
+                if (file_len == 0) {
+                    target->inode = 0;
+                }
+
+                pre->rec_len += target->rec_len;
+                return 0;
             }
             pre_offset = target_offset;
             target_offset += target->rec_len;
