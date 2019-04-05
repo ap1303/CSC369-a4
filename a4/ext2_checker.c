@@ -75,7 +75,7 @@ int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsign
         if (inode == 1) {
             sb -> s_free_inodes_count += 1;
             bg -> bg_free_inodes_count += 1;
-            printf("Fixed: inode [%d] not marked as in-use\n":, num + 1);
+            printf("Fixed: inode [%d] not marked as in-use\n", num + 1);
             *total += 1; 
         } else {
             sb -> s_free_blocks_count += 1;
