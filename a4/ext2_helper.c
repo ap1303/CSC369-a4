@@ -630,8 +630,8 @@ int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsign
 }
 
 void fix_file(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned char *inode_bitmap, unsigned char *block_bitmap, struct ext2_dir_entry *dir, struct ext2_inode *inode, int inode_num, int *total) {
-    if ((inode -> i_mode & EXT2_S_IFREG) == 0) {
-        if (inode -> i_mode & EXT2_S_IFDIR) {
+    if ((inode -> i_mode & EXT2_S_IFREG) != EXT2_S_IFREG) {
+        if ((inode -> i_mode & EXT2_S_IFDIR) == EXT2_S_IFDIR) {
             dir -> file_type = EXT2_FT_DIR;
         } else {
             dir -> file_type = EXT2_FT_SYMLINK;
@@ -665,8 +665,8 @@ void fix_file(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
 }
 
 void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned char *inode_bitmap, unsigned char *block_bitmap, struct ext2_dir_entry *dir, struct ext2_inode *inode, int inode_num, int *total) {
-    if ((inode -> i_mode & EXT2_S_IFLNK) == 0) {
-        if (inode -> i_mode & EXT2_S_IFDIR) {
+    if ((inode -> i_mode & EXT2_S_IFLNK) != EXT2_S_IFLNK) {
+        if ((inode -> i_mode & EXT2_S_IFDIR) == EXT2_S_IFDIR) {
             dir -> file_type = EXT2_FT_DIR;
         } else {
             dir -> file_type = EXT2_FT_REG_FILE;
@@ -698,8 +698,8 @@ void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, 
 }
 
 void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned char *inode_bitmap, unsigned char *block_bitmap, struct ext2_inode *inode_table, struct ext2_dir_entry *dir, struct ext2_inode *inode, int inode_num, int *total) {
-     if ((inode -> i_mode & EXT2_S_IFDIR) == 0) {
-        if (inode -> i_mode & EXT2_S_IFREG) {
+     if ((inode -> i_mode & EXT2_S_IFDIR) != EXT2_S_IFDIR) {
+        if ((inode -> i_mode & EXT2_S_IFREG) == EXT2_S_IFREG) {
             if (dir != NULL) {
                 dir -> file_type = EXT2_FT_REG_FILE;
             } 
