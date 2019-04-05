@@ -69,13 +69,13 @@ int fix_block_count(unsigned char *disk, unsigned int block_count, struct ext2_s
 int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned char *bitmap, int num, int inode, int *total) {
     int i = num / 8;
     int j = num - (8 * i);
-    unsigned char e = bitmap[i + 1];
+    unsigned char e = bitmap[i];
     if ((e & (1 << j)) == 0) {
         bitmap[i + 1] |= (1 << j);
         if (inode == 1) {
             sb -> s_free_inodes_count += 1;
             bg -> bg_free_inodes_count += 1;
-            printf("Fixed: inode [%d] not marked as in-use", num + 1);
+            printf("Fixed: inode [%d] not marked as in-use\n":, num + 1);
             *total += 1; 
         } else {
             sb -> s_free_blocks_count += 1;
@@ -97,13 +97,13 @@ void fix_file(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
         } else {
             dir -> file_type = EXT2_FT_SYMLINK;
         }
-        printf("Fixed: Entry type vs inode mismatch: inode [%d]", inode_num + 1);
+        printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num + 1);
         *total += 1;
     }
     check_bitmap(sb, bg, inode_bitmap, inode_num, 1, total);
     if (inode -> i_dtime != 0) {
         inode -> i_dtime = 0;
-        printf("Fixed: valid inode marked for deletion: [%d]", inode_num + 1);
+        printf("Fixed: valid inode marked for deletion: [%d]\n", inode_num + 1);
         *total = (*total) + 1;
     }
     int count = 0;
@@ -118,7 +118,7 @@ void fix_file(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
             break;
         }
     } 
-    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]", count, inode_num + 1);
+    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num + 1);
     *total += count;
 }
 
@@ -129,13 +129,13 @@ void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, 
         } else {
             dir -> file_type = EXT2_FT_REG_FILE;
         }
-        printf("Fixed: Entry type vs inode mismatch: inode [%d]", inode_num + 1);
+        printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num + 1);
         *total += 1;
     }
     check_bitmap(sb, bg, inode_bitmap, inode_num, 1, total);
     if (inode -> i_dtime != 0) {
         inode -> i_dtime = 0;
-        printf("Fixed: valid inode marked for deletion: [%d]", inode_num + 1);
+        printf("Fixed: valid inode marked for deletion: [%d]\n", inode_num + 1);
         *total += 1;
     }
     int count = 0;
@@ -148,7 +148,7 @@ void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, 
             }
         }
     } 
-    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]", count, inode_num + 1);
+    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num + 1);
     *total += count;
 }
 
@@ -159,13 +159,13 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
         } else {
             dir -> file_type = EXT2_FT_SYMLINK;
         }
-        printf("Fixed: Entry type vs inode mismatch: inode [%d]", inode_num + 1);
+        printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num + 1);
         *total += 1;
     }
     check_bitmap(sb, bg, inode_bitmap, inode_num, 1, total);
     if (inode -> i_dtime != 0) {
         inode -> i_dtime = 0;
-        printf("Fixed: valid inode marked for deletion: [%d]", inode_num + 1);
+        printf("Fixed: valid inode marked for deletion: [%d]\n", inode_num + 1);
         *total += 1;
     }
     int count = 0;
@@ -180,7 +180,7 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
             break;
         }  
     } 
-    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]", count, inode_num + 1);
+    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num + 1);
     *total += count;
 
     // recursive calls
