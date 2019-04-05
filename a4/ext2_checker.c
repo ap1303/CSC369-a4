@@ -153,17 +153,15 @@ void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, 
 }
 
 void fix_dir_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned char *inode_bitmap, unsigned char *block_bitmap, struct ext2_inode *inode_table, struct ext2_dir_entry *dir, struct ext2_inode *inode, int inode_num, int *total) {
-     if (inode -> i_mode == 0) {
-        inode -> i_mode = EXT2_S_IFDIR;
-     } else if ((inode -> i_mode & EXT2_S_IFDIR) == 0) {
+     if ((inode -> i_mode & EXT2_S_IFDIR) == 0) {
         if (inode -> i_mode & EXT2_S_IFREG) {
             dir -> file_type = EXT2_FT_REG_FILE;
         } else {
             dir -> file_type = EXT2_FT_SYMLINK;
         }
-    } 
-    printf("Fixed: Entry type vs inode mismatch: inode [%d]", inode_num + 1);
-    *total += 1;
+        printf("Fixed: Entry type vs inode mismatch: inode [%d]", inode_num + 1);
+        *total += 1;
+    }
     check_bitmap(sb, bg, inode_bitmap, inode_num, 1, total);
     if (inode -> i_dtime != 0) {
         inode -> i_dtime = 0;
@@ -233,7 +231,7 @@ int main(int argc, char **argv) {
 
     struct ext2_super_block *sb = (struct ext2_super_block *)(disk + 1024);
     struct ext2_group_desc *bg = (struct ext2_group_desc *) (disk + 2048);
-    struct ext2_inode *inode_table = (struct ext2_inode *) (disk + bg -> bg_inode_bitmap * EXT2_BLOCK_SIZE);
+    struct ext2_inode *inode_table = (struct ext2_inode *) (disk + bg -> bg_inode_table * EXT2_BLOCK_SIZE);
     unsigned char *block_bitmap = disk + bg -> bg_block_bitmap * EXT2_BLOCK_SIZE;
     unsigned char *inode_bitmap = disk + bg -> bg_inode_bitmap * EXT2_BLOCK_SIZE;
 
@@ -242,12 +240,12 @@ int main(int argc, char **argv) {
     fix_inode_count(disk, sb -> s_inodes_count, sb, bg, &total_fixes);
 
     struct ext2_inode root = inode_table[EXT2_ROOT_INO - 1];
-    for(int i = 0; i < 15; i++) {
-        if (i == 0) {
-            root.i_block[i] = 9;
+    for(int i = 0; i < 12; i++) {
+        int block = root.i_block[i];
+        if (block != 0) {
             int rec_len_sum = 0;
             while (rec_len_sum < EXT2_BLOCK_SIZE) {
-               struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (BLOCK_PTR(9) + rec_len_sum);
+               struct ext2_dir_entry *dir = (struct ext2_dir_entry *) (BLOCK_PTR(block) + rec_len_sum);
                if (dir -> file_type == EXT2_FT_REG_FILE) {
                    fix_file(sb, bg, inode_bitmap, block_bitmap, dir, inode_table + ((dir -> inode) - 1), ((dir -> inode) - 1), &total_fixes);
                } else if (dir -> file_type == EXT2_FT_SYMLINK) {
@@ -260,7 +258,7 @@ int main(int argc, char **argv) {
                rec_len_sum += dir -> rec_len;
             } 
         } else {
-            root.i_block[i] = 0;
+            break;
         } 
     } 
 }
