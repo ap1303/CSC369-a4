@@ -71,7 +71,7 @@ int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsign
     int j = num - (8 * i);
     unsigned char e = bitmap[i];
     if ((e & (1 << j)) == 0) {
-        bitmap[i + 1] |= (1 << j);
+        bitmap[i] |= (1 << j);
         if (inode == 1) {
             sb -> s_free_inodes_count += 1;
             bg -> bg_free_inodes_count += 1;
@@ -142,7 +142,7 @@ void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, 
     for(int i = 0; i < 15; i++) {
         int block = inode -> i_block[i];
         if (block != 0) {
-            int success = check_bitmap(sb, bg, block_bitmap, block - 1, 0, total);
+            int success = check_bitmap(sb, bg, block_bitmap, block, 0, total);
             if (success == 1) {
                 count += 1;
             }
@@ -172,7 +172,7 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
     for(int i = 0; i < 15; i++) {
         int block = inode -> i_block[i];
         if (block != 0) {
-            int success = check_bitmap(sb, bg, block_bitmap, block - 1, 0, total);
+            int success = check_bitmap(sb, bg, block_bitmap, block, 0, total);
             if (success == 1) {
                 count += 1;
             }
