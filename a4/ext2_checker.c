@@ -5,18 +5,18 @@ unsigned char *disk;
 int fix_inode_count(unsigned char *disk, unsigned int inodes_count, struct ext2_super_block *sb, struct ext2_group_desc *bg, int *total_fixes) {
     unsigned char *inode_bitmap = disk + bg->bg_inode_bitmap * EXT2_BLOCK_SIZE;
     int size = inodes_count / 8;
-    int i = 0;
+    int count = 0;
     for(int i = 0; i < size; i++) {
         unsigned char e = inode_bitmap[i];
         for(int j = 0; j < 8; j++) {
             int temp = !!((e >> j) & 0x01);
             if (temp == 1) {
-                i += 1;
+                count += 1;
             }
         }
     }
 
-    int free_inodes = inodes_count - i;
+    int free_inodes = inodes_count - count;
 
     if (sb -> s_free_inodes_count != free_inodes) {
         int delta = sb -> s_free_inodes_count - free_inodes;
@@ -37,18 +37,18 @@ int fix_inode_count(unsigned char *disk, unsigned int inodes_count, struct ext2_
 int fix_block_count(unsigned char *disk, unsigned int block_count, struct ext2_super_block *sb, struct ext2_group_desc *bg, int *total_fixes) {
     unsigned char *block_bitmap = disk + bg->bg_block_bitmap * EXT2_BLOCK_SIZE;
     int size = block_count / 8;
-    int i = 0;
+    int count = 0;
     for(int i = 0; i < size; i++) {
         unsigned char e = block_bitmap[i];
         for(int j = 0; j < 8; j++) {
             int temp = !!((e >> j) & 0x01);
             if (temp == 1) {
-                i += 1;
+                count += 1;
             }
         }
     }
 
-    int free_blocks = block_count - i;
+    int free_blocks = block_count - count;
 
     if (sb -> s_free_blocks_count != free_blocks) {
         int delta = sb -> s_free_blocks_count - free_blocks;
