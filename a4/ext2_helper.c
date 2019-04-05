@@ -644,7 +644,7 @@ void fix_file(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
 
     if (inode -> i_dtime != 0) {
         inode -> i_dtime = 0;
-        printf("Fixed: valid inode marked for deletion: [%d]\n", inode_num + 1);
+        printf("Fixed: valid inode marked for deletion: [%d]\n", inode_num);
         *total = (*total) + 1;
     }
 
@@ -660,7 +660,7 @@ void fix_file(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsigned 
             break;
         }
     } 
-    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num + 1);
+    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num);
     *total += count;
 }
 
@@ -671,7 +671,7 @@ void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, 
         } else {
             dir -> file_type = EXT2_FT_REG_FILE;
         }
-        printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num + 1);
+        printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num);
         *total += 1;
     }
 
@@ -679,7 +679,7 @@ void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, 
 
     if (inode -> i_dtime != 0) {
         inode -> i_dtime = 0;
-        printf("Fixed: valid inode marked for deletion: [%d]\n", inode_num + 1);
+        printf("Fixed: valid inode marked for deletion: [%d]\n", inode_num);
         *total += 1;
     }
 
@@ -693,7 +693,7 @@ void fix_symlink_files(struct ext2_super_block *sb, struct ext2_group_desc *bg, 
             }
         }
     } 
-    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num + 1);
+    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num);
     *total += count;
 }
 
@@ -708,7 +708,7 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
                 dir -> file_type = EXT2_FT_SYMLINK;
             }     
         }
-        printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num + 1);
+        printf("Fixed: Entry type vs inode mismatch: inode [%d]\n", inode_num);
         *total += 1;
     }
 
@@ -716,7 +716,7 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
 
     if (inode -> i_dtime != 0) {
         inode -> i_dtime = 0;
-        printf("Fixed: valid inode marked for deletion: [%d]\n", inode_num + 1);
+        printf("Fixed: valid inode marked for deletion: [%d]\n", inode_num);
         *total += 1;
     }
 
@@ -732,7 +732,7 @@ void fix_dir_files(unsigned char *disk, struct ext2_super_block *sb, struct ext2
             break;
         }  
     } 
-    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num + 1);
+    printf("Fixed: %d in-use data blocks not marked in data bitmap for inode: [%d]\n", count, inode_num);
     *total += count;
 
     // recursive calls
