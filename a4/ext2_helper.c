@@ -617,7 +617,11 @@ int check_bitmap(struct ext2_super_block *sb, struct ext2_group_desc *bg, unsign
         e = bitmap[i - 1];
     }
     if ((e & (1 << j)) == 0) {
-        bitmap[i] |= (1 << j);
+        if (j != 0) {
+            bitmap[i] |= (1 << j);
+        } else {
+            bitmap[i - 1] |= 0x80;
+        }
         if (inode == 1) {
             sb -> s_free_inodes_count -= 1;
             bg -> bg_free_inodes_count -= 1;
