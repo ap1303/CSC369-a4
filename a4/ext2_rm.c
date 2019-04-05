@@ -13,13 +13,11 @@ int main(int argc, char **argv) {
 
     int fd = open(argv[1], O_RDWR);
 	if(fd == -1) {
-		perror("open");
 		exit(1);
     }
 
     unsigned char * disk = mmap(NULL, 128 * 1024, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if(disk == MAP_FAILED) {
-        perror("mmap");
         exit(1);
     }
 
@@ -32,20 +30,16 @@ int main(int argc, char **argv) {
     int p_index = 0;
     int error = get_last_name(disk, inode_table, root, rm_path, rm_parent_inode, rm_name, &p_index);
     if (error == ENOENT) {
-        printf("get_last_name err\n");
         return ENOENT;
     }
 
     struct ext2_dir_entry *r_dir = search_dir(disk, rm_name, rm_parent_inode);
-    printf("AAAA\n");
 
     int inode_index = r_dir->inode;
 
     if (inode_index == -1) {
-        printf("File doesn't exist\n");
         return ENOENT;
     }
-
 
     struct ext2_inode* rm_inode = &inode_table[inode_index - 1];
     int num_blocks = rm_inode->i_blocks / 2;
@@ -55,7 +49,6 @@ int main(int argc, char **argv) {
         return ENOENT;
     }
 
-    printf("%i\n", p_index);
     rm_dir(disk, r_dir, rm_parent_inode, rm_name);
 
     rm_inode->i_links_count--;
@@ -71,4 +64,7 @@ int main(int argc, char **argv) {
     if (rm_inode->i_links_count == 0){
         free_inode_map(disk, bg, sb, inode_index);
     }
+
+    free(rm_parent_inode);
+    return 0;
 }

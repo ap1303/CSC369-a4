@@ -17,3 +17,11 @@ rm: ext2_rm.c ext2_helper.c
 
 checker: ext2_checker.c ext2_helper.c
 		gcc -Wall -g -o ext2_checker ext2_checker.c
+
+clean:
+		rm ext2_checker
+		#rm ext2_restore
+		rm ext2_cp
+		rm ext2_ln
+		rm ext2_mkdir
+		rm ext2_rm
