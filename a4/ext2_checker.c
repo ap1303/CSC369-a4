@@ -2,7 +2,7 @@
 
 unsigned char *disk;
 
-int fix_inode_count(unsigned int inodes_count, struct ext2_super_block *sb, struct ext2_group_desc *bg, int *total_fixes) {
+int fix_inode_count(unsigned char *disk, unsigned int inodes_count, struct ext2_super_block *sb, struct ext2_group_desc *bg, int *total_fixes) {
     unsigned char *inode_bitmap = disk + bg->bg_inode_bitmap * EXT2_BLOCK_SIZE;
     int size = inodes_count / 8;
     int i = 0;
@@ -34,7 +34,7 @@ int fix_inode_count(unsigned int inodes_count, struct ext2_super_block *sb, stru
     return 0;
 }
 
-int fix_block_count(unsigned int block_count, struct ext2_super_block *sb, struct ext2_group_desc *bg, int *total_fixes) {
+int fix_block_count(unsigned char *disk, unsigned int block_count, struct ext2_super_block *sb, struct ext2_group_desc *bg, int *total_fixes) {
     unsigned char *block_bitmap = disk + bg->bg_block_bitmap * EXT2_BLOCK_SIZE;
     int size = block_count / 8;
     int i = 0;
@@ -234,8 +234,8 @@ int main(int argc, char **argv) {
     unsigned char *block_bitmap = disk + bg -> bg_block_bitmap * EXT2_BLOCK_SIZE;
 
 
-    fix_block_count(sb -> s_blocks_count, sb, bg, &total_fixes);
-    fix_inode_count(sb -> s_inodes_count, sb, bg, &total_fixes);
+    fix_block_count(disk, sb -> s_blocks_count, sb, bg, &total_fixes);
+    fix_inode_count(disk, sb -> s_inodes_count, sb, bg, &total_fixes);
 
     struct ext2_inode root = inode_table[EXT2_ROOT_INO - 1];
     for(int i = 0; i < 12; i++) {
