@@ -493,7 +493,7 @@ int check_valid_restore(struct ext2_dir_entry *target, struct ext2_inode *inode_
     return 0;
 }
 
-int restore_entry(unsigned char *disk, struct ext2_dir_entry *pre, struct ext2_dir_entry *target, int gap, struct ext2_inode *restore_inode) {
+int restore_dir(unsigned char *disk, struct ext2_dir_entry *pre, struct ext2_dir_entry *target, int gap, struct ext2_inode *restore_inode) {
     target->rec_len = pre->rec_len - gap;
     pre->rec_len = gap;
 

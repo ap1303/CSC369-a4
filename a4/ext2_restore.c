@@ -33,5 +33,5 @@ int main(int argc, char **argv) {
         return ENOENT;
     }
 
-    restore_dir(&pre, &restore_dir, offset);
+    restore_entry(&pre, &restore_dir, offset);
 }
